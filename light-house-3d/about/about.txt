@@ -1,0 +1,15 @@
+This tutorial is taken from LightHouse3D glut tutorial series.
+
+Tutorial & Code tabs filled with a copy of the original source content from LightHouse3D website.
+However, we've implemented each tutorial output for the sake of simplicity, 
+also for the user to avoid the hassle of making CPP files, Makefiles or having a hard time visualizing the output.
+
+Note: "if you are a beginner then don't search for the tutorial's code in this Application files, you can see and copy 
+	the current tutorial code from the (Code) tab."
+
+Click the link below to visit the mentioned website
+
+LightHouse3D Website:
+	
+This Tutorial Hyperlink:
+	

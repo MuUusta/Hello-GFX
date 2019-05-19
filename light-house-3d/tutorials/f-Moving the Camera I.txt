@@ -1,0 +1,173 @@
+OK, so lets see a more exciting use for the keyboard using GLUT. 
+In this section we’re going to go through the code of an application that will draw a small world populated with snowmen, 
+and we’re going to use the direction keys to move the camera in this world. The left and right keys will rotate the camera around the Y axis, i.e. 
+in the XZ plane, whereas the up and down keys will move the camera forward and backwards in the current direction.
+
+The code for this sample application is now presented with comments where appropriate. First we need some global variables to store the camera parameters. 
+The variables will store both the camera position and the vector that gives us the aiming direction. We will also store the angle. 
+There is no need to store the y component since it is constant.
+
+Hence, we need:
+
+angle: the angle of rotation in the y axis. this variable will allow us to rotate the camera
+x,z: The camera position in the XZ plane
+lx,lz: A vector defining our line of sight
+Lets deal with the variable declarations:
+
+// angle of rotation for the camera direction
+float angle=0.0;
+// actual vector representing the camera's direction
+float lx=0.0f,lz=-1.0f;
+// XZ position of the camera
+float x=0.0f,z=5.0f;
+The code to draw a snowman is now presented. The result looks like this
+
+
+
+void drawSnowMan() {
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+// Draw Body
+	glTranslatef(0.0f ,0.75f, 0.0f);
+	glutSolidSphere(0.75f,20,20);
+
+// Draw Head
+	glTranslatef(0.0f, 1.0f, 0.0f);
+	glutSolidSphere(0.25f,20,20);
+
+// Draw Eyes
+	glPushMatrix();
+	glColor3f(0.0f,0.0f,0.0f);
+	glTranslatef(0.05f, 0.10f, 0.18f);
+	glutSolidSphere(0.05f,10,10);
+	glTranslatef(-0.1f, 0.0f, 0.0f);
+	glutSolidSphere(0.05f,10,10);
+	glPopMatrix();
+
+// Draw Nose
+	glColor3f(1.0f, 0.5f , 0.5f);
+	glutSolidCone(0.08f,0.5f,10,2);
+}
+Next we have the new render function. It contains all the commands to draw our little world. Another change is in the gluLookAt function. 
+The parameters of the gluLookAt function are now variables instead of fixed values. Just in case you aren’t familiar with this function, 
+here goes a brief explanation. The gluLookAt function provides an easy and intuitive way to set the camera position and orientation. 
+Basically it has three groups of parameters, each one is composed of 3 floating point values. The first three values indicate the camera position. 
+The second set of values defines the point we’re looking at. 
+Actually it can be any point in our line of sight.The last group indicates the up vector, this is usually set to (0.0, 1.0, 0.0), meaning that the camera’s is not tilted. 
+If you want to tilt the camera just play with these values. For example, to see everything upside down try (0.0, -1.0, 0.0).
+
+As mentioned before x, y, and z represent the camera position so these values correspond to the first vector in gluLookAt. 
+The second set of parameters, the look at point, is computed by adding the vector which defines our line of sight to the camera position.
+
+Look At Point = Line Of Sight + Camera Position
+Here is the code for the render function:
+
+void renderScene(void) {
+
+	// Clear Color and Depth Buffers
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Reset transformations
+	glLoadIdentity();
+	// Set the camera
+	gluLookAt(	x, 1.0f, z,
+			x+lx, 1.0f,  z+lz,
+			0.0f, 1.0f,  0.0f);
+
+        // Draw ground
+	glColor3f(0.9f, 0.9f, 0.9f);
+	glBegin(GL_QUADS);
+		glVertex3f(-100.0f, 0.0f, -100.0f);
+		glVertex3f(-100.0f, 0.0f,  100.0f);
+		glVertex3f( 100.0f, 0.0f,  100.0f);
+		glVertex3f( 100.0f, 0.0f, -100.0f);
+	glEnd();
+
+        // Draw 36 SnowMen
+	for(int i = -3; i < 3; i++)
+		for(int j=-3; j < 3; j++) {
+			glPushMatrix();
+			glTranslatef(i*10.0,0,j * 10.0);
+			drawSnowMan();
+			glPopMatrix();
+		}
+
+	glutSwapBuffers();
+}
+Now where ready for the function that will process the arrow keys events. We’re using the left and right arrow keys to rotate the camera, 
+i.e. to change the vector that defines the line of sight. The up and down keys are used to move along the current line of sight.
+
+When the user presses the left or right keys the variable angle is changed accordingly. 
+Based on the angle value it computes the appropriate values for the new lx and lz components of the line of sight vector. 
+Note that we’re only moving in the XZ plane, therefore we don’t need to change the ly coordinate of the line of sight vector. 
+The new lx and lz are mapped onto a unitary circle on the XZ plane. Therefore, given a angle ang, the new values for lx and lz are:
+
+lx = sin(ang)
+lz = -cos(ang)
+Just like if we wanted to convert from Polar coordinates to Euclidean coordinates. The lz is negative because the initial value is -1.
+
+Note that the camera doesn’t move when updating lx and lz, the camera position remains the same, only the look at point is altered.
+
+We also want to move the camera along the line of sight, i.e. the next camera position must be along the line of sight vector. 
+In order to achieve this we’re going to add or subtract a fraction of the line of sight vector to our current position when the up or down arrows are pressed, 
+respectively. For instance, to move the camera forward the new values for x and z are:
+
+x = x + lx * fraction
+z = z + lz * fraction
+The fraction is a possible speed implementation. We know that (lx,lz) is a unitary vector (as mentioned before, its a point in the unit circle), 
+therefore if the fraction is kept constant then the speed will be kept constant as well. By increasing the fraction we’re moving faster, i.e. we’re moving farther in each frame.
+
+void processSpecialKeys(int key, int xx, int yy) {
+
+	float fraction = 0.1f;
+
+	switch (key) {
+		case GLUT_KEY_LEFT :
+			angle -= 0.01f;
+			lx = sin(angle);
+			lz = -cos(angle);
+			break;
+		case GLUT_KEY_RIGHT :
+			angle += 0.01f;
+			lx = sin(angle);
+			lz = -cos(angle);
+			break;
+		case GLUT_KEY_UP :
+			x += lx * fraction;
+			z += lz * fraction;
+			break;
+		case GLUT_KEY_DOWN :
+			x -= lx * fraction;
+			z -= lz * fraction;
+			break;
+	}
+}
+Next follows the code for the main function using GLUT. The only news in here is the depth test enabling.
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// register callbacks
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+	glutIdleFunc(renderScene);
+	glutKeyboardFunc(processNormalKeys);
+	glutSpecialFunc(processSpecialKeys);
+
+	// OpenGL init
+	glEnable(GL_DEPTH_TEST);
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+
+	return 1;
+}

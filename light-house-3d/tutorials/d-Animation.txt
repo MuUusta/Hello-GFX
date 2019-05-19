@@ -1,0 +1,163 @@
+OK, so far so good. We have an OpenGL window with a white triangle. Nothing very exciting, but hey, its a start. 
+Now to complete this part of the GLUT tutorial lets have that triangle spinning.
+
+The first thing we must do is to tell GLUT that when the application is idle, the render function should be called. 
+This causes GLUT to keep calling our rendering function therefore enabling animation. GLUT provides a function, glutIdleFunc, 
+that lets you register a callback function to be called when the application is idle.
+
+void glutIdleFunc(void (*func)(void));
+
+Parameters:
+
+func – The name of the function that will be called whenever the application is idle.
+In our case, when the application is idle we want to call the previously defined function that does the actual rendering: renderScene. OK, so the main function now looks like this:
+
+ 
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D- GLUT Tutorial");
+
+	// register callbacks
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+
+	// here is the idle func registration
+	glutIdleFunc(renderScene);
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+
+	return 1;
+}
+ 
+
+Afterwards, we go and change the rendering itself. First lets declare a floating point variable angle, and initialize it to 0.0 . 
+Then we add the necessary stuff to the renderScene function.
+
+ 
+
+float angle = 0.0f;
+
+void renderScene(void) {
+
+	// Clear Color and Depth Buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Reset transformations
+	glLoadIdentity();
+	// Set the camera
+	gluLookAt(	0.0f, 0.0f, 10.0f,
+			0.0f, 0.0f,  0.0f,
+			0.0f, 1.0f,  0.0f);
+
+	glRotatef(angle, 0.0f, 1.0f, 0.0f);
+
+	glBegin(GL_TRIANGLES);
+		glVertex3f(-2.0f,-2.0f, 0.0f);
+		glVertex3f( 2.0f, 0.0f, 0.0);
+		glVertex3f( 0.0f, 2.0f, 0.0);
+	glEnd();
+
+	angle+=0.1f;
+
+	glutSwapBuffers();
+}
+ 
+
+A note on double buffering
+
+As you recall, when we set the display mode in our main function we requested double buffering. This feature provides two buffers for display. 
+The buffer being shown is the front buffer, and the other buffer is the back buffer. It is in the latter buffer that drawing takes place. 
+When we’re done sending drawing commands we ask to swap the buffers, i.e. once the driver is done rendering the back buffer will become the front buffer, 
+and the previous front buffer will become the back buffer, where the rendering of the next frame will take place.
+
+The glutSwapBuffers function cause the front and back buffers to switch thereby showing what was previously drawn in the back buffer. The syntax is as follows:
+
+void glutSwapBuffers();
+ 
+
+The code so far
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
+void changeSize(int w, int h) {
+
+	// Prevent a divide by zero, when window is too short
+	// (you cant make a window of zero width).
+	if (h == 0)
+		h = 1;
+
+	float ratio =  w * 1.0 / h;
+
+	// Use the Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+
+	// Reset Matrix
+	glLoadIdentity();
+
+	// Set the viewport to be the entire window
+	glViewport(0, 0, w, h);
+
+	// Set the correct perspective.
+	gluPerspective(45.0f, ratio, 0.1f, 100.0f);
+
+	// Get Back to the Modelview
+	glMatrixMode(GL_MODELVIEW);
+}
+
+float angle = 0.0f;
+
+void renderScene(void) {
+
+	// Clear Color and Depth Buffers
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Reset transformations
+	glLoadIdentity();
+	// Set the camera
+	gluLookAt(	0.0f, 0.0f, 10.0f,
+				0.0f, 0.0f,  0.0f,
+				0.0f, 1.0f,  0.0f);
+
+	glRotatef(angle, 0.0f, 1.0f, 0.0f);
+
+	glBegin(GL_TRIANGLES);
+		glVertex3f(-2.0f,-2.0f, 0.0f);
+		glVertex3f( 2.0f, 0.0f, 0.0);
+		glVertex3f( 0.0f, 2.0f, 0.0);
+	glEnd();
+
+	angle+=0.1f;
+
+	glutSwapBuffers();
+}
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D- GLUT Tutorial");
+
+	// register callbacks
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+	glutIdleFunc(renderScene);
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+
+	return 1;
+}

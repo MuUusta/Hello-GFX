@@ -1,0 +1,80 @@
+In the previous example we changed the orientation of the camera with the keyboard. In here we are going to use the mouse instead.
+
+When the user presses the mouse left button we are going to record the X position of the mouse. 
+As the mouse moves will check the new X position, and based on the difference we’ll set a variable <I>deltaAngle</I>. 
+This variable will be added to the initial angle to compute the direction of the camera.
+
+A variable to store the X position where the mouse is clicked is also required.
+
+float deltaAngle = 0.0f;
+int xOrigin = -1;
+Note that xOrigin is initialized to a value that never occurs when the mouse is pressed (it must be at least zero). 
+This will enable us to distinguish if the user is pressing the left button or any other button.
+
+The next function is responsible for processing the button state changes:
+
+void mouseButton(int button, int state, int x, int y) {
+
+	// only start motion if the left button is pressed
+	if (button == GLUT_LEFT_BUTTON) {
+
+		// when the button is released
+		if (state == GLUT_UP) {
+			angle += deltaAngle;
+			xOrigin = -1;
+		}
+		else  {// state = GLUT_DOWN
+			xOrigin = x;
+		}
+	}
+}
+Notice that the var xOrigin is set to -1 when the left button is released.
+
+The function to process the motion of the mouse is now presented:
+
+void mouseMove(int x, int y) {
+
+	// this will only be true when the left button is down
+	if (xOrigin >= 0) {
+
+		// update deltaAngle
+		deltaAngle = (x - xOrigin) * 0.001f;
+
+		// update camera's direction
+		lx = sin(angle + deltaAngle);
+		lz = -cos(angle + deltaAngle);
+	}
+}
+In the main function we have to register the two new callback functions:
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// register callbacks
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+	glutIdleFunc(renderScene);
+
+	glutIgnoreKeyRepeat(1);
+	glutKeyboardFunc(processNormalKeys);
+	glutSpecialFunc(pressKey);
+	glutSpecialUpFunc(releaseKey);
+
+	// here are the two new functions
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseMove);
+
+	// OpenGL init
+	glEnable(GL_DEPTH_TEST);
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+
+	return 1;
+}

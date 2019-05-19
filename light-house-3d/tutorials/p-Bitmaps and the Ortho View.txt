@@ -1,0 +1,160 @@
+A common usage for bitmap fonts, as they are only 2D, is to present information to the user. 
+For instance, one simple example is when we want to display the number of frames per second of an application. 
+This information should stay in the same position on the screen even when the user moves the camera around. 
+Furthermore, it is easier to compute these positions when using a 2D orthogonal projection, 
+instead of a perspective projection because we can specify the position in pixels.
+
+The basic scheme of things to do is to draw the world as we used to, with a perspective projection, and afterwards switch to the orthographic projection and draw the text. 
+After this last step we should restore the original perspective so that the next frame is rendered correctly.
+
+Next we present a template of a rendering function to achieve this effect:
+
+void renderScene() {
+
+// do everything we need to render the world as usual
+	...
+
+	setOrthographicProjection();
+
+	glPushMatrix();
+	glLoadIdentity();
+	renderBitmapString(5,30,GLUT_BITMAP_HELVETICA_18,"Lighthouse3D");
+	glPopMatrix();
+
+	restorePerspectiveProjection();
+
+	glutSwapBuffers();
+}
+The two new functions above, setOrthograpicProjection and restorePerspectiveProjection are now presented. 
+The first function starts by changing the matrix mode to GL_PROJECTION, meaning that we’re working on the camera. 
+Afterwards we save the previous settings, which in this case refer to the perspective projection defined elsewhere. 
+We then reset the matrix with glLoadIdentity(), and define an orthographic projection using gluOrtho.
+
+The arguments for this function indicate the range for both the x and y axis. The transformations afterwards flip the y axis, i.e. 
+positive is downward, and translate the origin to the upper left corner. This makes it easier to write text in screen coordinates.
+
+The variables w and h we’re computed elsewhere (see the changeSize function in the source code).
+
+void setOrthographicProjection() {
+
+	// switch to projection mode
+	glMatrixMode(GL_PROJECTION);
+
+	// save previous matrix which contains the
+	//settings for the perspective projection
+	glPushMatrix();
+
+	// reset matrix
+	glLoadIdentity();
+
+	// set a 2D orthographic projection
+	gluOrtho2D(0, w, 0, h);
+
+	// invert the y axis, down is positive
+	glScalef(1, -1, 1);
+
+	// mover the origin from the bottom left corner
+	// to the upper left corner
+	glTranslatef(0, -h, 0);
+
+	// switch back to modelview mode
+	glMatrixMode(GL_MODELVIEW);
+}
+A faster way to perform the ortho projection is as follows. The idea is to set the projection in such a way that no scale and translation are required.
+
+void setOrthographicProjection() {
+
+	// switch to projection mode
+	glMatrixMode(GL_PROJECTION);
+
+	// save previous matrix which contains the
+	//settings for the perspective projection
+	glPushMatrix();
+
+	// reset matrix
+	glLoadIdentity();
+
+	// set a 2D orthographic projection
+	gluOrtho2D(0, w, h, 0);
+
+	// switch back to modelview mode
+	glMatrixMode(GL_MODELVIEW);
+}
+This function is very simple. Since we saved the settings of the perspective projection before we set the orthographic projection, 
+all we have to do is to change the matrix mode to GL_PROJECTION, pop the matrix, i.e. restore the settings, and finally change the matrix mode again to GL_MODELVIEW.
+
+void restorePerspectiveProjection() {
+
+	glMatrixMode(GL_PROJECTION);
+	// restore previous projection matrix
+	glPopMatrix();
+
+	// get back to modelview mode
+	glMatrixMode(GL_MODELVIEW);
+}
+The function above, renderBitmapString, as presented in the previous section will write the characters continuously, 
+without extra spacing, except where a space character appears in the text. 
+In order to add extra spacing we must keep track of where the current raster position is so that we can add the extra spacing to the x coordinate, for example. 
+There are at least two different approaches to keep track of the raster position; one is to compute the current raster position after drawing a bitmap. 
+The second option involves asking the OpenGL state machine what is the current raster position.
+
+The first approach requires that we know the dimensions of the character. While the maximum height is always constant for a particular font, 
+the width may vary in some fonts. Fortunately GLUT provides a function that returns the width of a character. The function is glutBitmapWidth and the syntax is as follows:
+
+int glutBitmapWidth(void *font, int character);
+
+Parameters:
+
+font – one of the pre defined fonts in GLUT, see the previous section for the possible values.
+character – the character which we want to know the width
+So for instance if we want a function that writes a string with a certain amount of pixels between each character we can write:
+
+void renderSpacedBitmapString(
+
+			float x,
+			float y,
+			int spacing,
+			void *font,
+			char *string) {
+
+  char *c;
+  int x1=x;
+
+  for (c=string; *c != '\0'; c++) {
+
+	glRasterPos2f(x1,y);
+	glutBitmapCharacter(font, *c);
+	x1 = x1 + glutBitmapWidth(font,*c) + spacing;
+  }
+}
+If we want to draw vertical text we can do as follows:
+
+void renderVerticalBitmapString(
+
+			float x,
+			float y,
+			int bitmapHeight,
+			void *font,
+			char *string) {
+
+  char *c;
+  int i;
+
+  for (c=string,i=0; *c != '\0'; i++,c++) {
+
+	glRasterPos2f(x, y+bitmapHeight*i);
+	glutBitmapCharacter(font, *c);
+  }
+}
+The variable bitmapHeight can be easily computed because we know the maximum height of each font, it is the last number in the font name. 
+For instance, GLUT_BITMAP_TIMES_ROMAN_10 is 10 pixels tall.
+
+One last thing, GLUT has yet another function for bitmap fonts, its glutBitMapLength and it computes the length in pixels of a string. 
+The return value of this function is the sum of the widths for every character in the string. Here goes the syntax:
+
+int glutBitmapLength(void *font, char *string);
+
+Parameters:
+
+font – one of the pre defined fonts in GLUT, see the previous section for the possible values.
+string – the string which we want to know the length in pixels

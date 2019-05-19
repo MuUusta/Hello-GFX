@@ -1,0 +1,176 @@
+Up until all source code used the display function as the idle function. This implies that GLUT will call the display function when there are no more events to process, i.e.
+, it will call the display function as often as possible.
+
+This is an easy way to build an interactive application. Whenever we press a key we know that after the keyboard event is processed by your callback function, 
+the display function will be called again and the screen will be redrawn.
+
+All that is required is for us to register the same function as both the display and idle functions.
+
+If our application is going to run in exclusive, or we want to get some benchmarks this is OK. However, when our application is just one of the things we want to have running, 
+then computer resources may become scarce.
+
+The culprit is of course our GLUT application, which is continuously calling the display function, even when there is nothing new to render. 
+Try checking the task manager tab for the processes and you can see that even if the render does not change from frame to frame, our GLUT app is eating CPU resources. 
+GPU resources are also being used, of course.
+
+When we need the CPU or GPU for other stuff then you’ll probably want to save these resources, while keeping the behaviour of our GLUT application unaffected.
+
+To achieve this we must selectively ask GLUT to call our display func. Thats what the function glutPostRedisplay is good for.
+
+glutPostRedisplay marks the current window to be redisplayed, i.e. it causes the main loop to call the display func asap. Note that it is only the current window, not all windows. 
+Since our last example has sub windows we must take some extra measures to guarantee that everything works OK.
+
+First we are going to change the display func for the main window so that it calls all render functions defined for the sub windows. 
+Then we can just call glutPost Redisplay for the main window and everything will be rendered again.
+
+In the main function we had:
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create main window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(800,800);
+	mainWindow = glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// callbacks for main window
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+        glutIdleFunc(renderSceneAll);
+        ...
+We are going to change the display func for the main window to renderSceneAll, the previous idle func, and we’re removing the callback registration for the idle func. 
+So our new main is as shown below:
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create main window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(800,800);
+	mainWindow = glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// callbacks for main window
+	glutDisplayFunc(renderSceneAll);
+	glutReshapeFunc(changeSize);
+
+	// Removing the idle function to save CPU and GPU
+	//glutIdleFunc(renderSceneAll);
+        ...
+Now lets see where we must put our calls to glutPostRedisplay. We only want to have our display func called when there will be a change in the rendered image. 
+Since all the scene is static, the only time the rendering differs is when we move the camera.
+
+The camera is moved with the mouse and keyboard so we must add a call to glutPostRedisplay when these events are processed.
+
+Lets start with the mouse. The camera moves when the mouse moves. So we are going to modify our mouse move function from:
+
+void mouseMove(int x, int y) {
+
+	// this will only be true when the left button is down
+	if (xOrigin >= 0) {
+
+		// update deltaAngle
+		deltaAngle = (x - xOrigin) * 0.001f;
+
+		// update camera's direction
+		lx = sin(angle + deltaAngle);
+		lz = -cos(angle + deltaAngle);
+	}
+}
+to:
+
+void mouseMove(int x, int y) {
+
+	// this will only be true when the left button is down
+	if (xOrigin >= 0) {
+
+		// update deltaAngle
+		deltaAngle = (x - xOrigin) * 0.001f;
+
+		// update camera's direction
+		lx = sin(angle + deltaAngle);
+		lz = -cos(angle + deltaAngle);
+
+                // setting the main window as active
+                //and marking it for redraw
+		glutSetWindow(mainWindow);
+		glutPostRedisplay();
+	}
+}
+Now for the keyboard. The function that processes events when a key is pressed is pressKey. So we are going to modify pressKey from:
+
+void pressKey(int key, int xx, int yy) {
+
+	switch (key) {
+		case GLUT_KEY_UP : deltaMove = 0.5f; break;
+		case GLUT_KEY_DOWN : deltaMove = -0.5f; break;
+	}
+}
+to:
+
+void pressKey(int key, int xx, int yy) {
+
+	switch (key) {
+		case GLUT_KEY_UP : deltaMove = 0.5f; break;
+		case GLUT_KEY_DOWN : deltaMove = -0.5f; break;
+	}
+
+        // setting the main window as active
+        //and marking it for redraw
+	glutSetWindow(mainWindow);
+	glutPostRedisplay();
+
+}
+Unfortunately we disabled the keyboard callbacks for key repetition, hence the above code change is not enough. 
+The pressKey function will only be called once regardless of the amount of time you keep the key pressed.
+
+Fortunately there is a way around this. When we press a key we did set a variable to a nonzero value. 
+Latter we checked the variable to see if the camera position needed to be updated. 
+This check took place in the renderSceneAll function, so we know that this test will take place whenever a user initially presses a key.
+
+Here is the renderSceneAll function from the previous example:
+
+// Global render func
+void renderSceneAll() {
+
+	// check for keyboard movement
+	if (deltaMove) {
+		computePos(deltaMove);
+	}
+
+	renderScene();
+	renderScenesw1();
+	renderScenesw2();
+	renderScenesw3();
+}
+The variable deltaMode will be non-zero when a key is initially pressed. Therefore we can call glutPostRedisplay inside the if statement as shown below.
+
+// Global render func
+void renderSceneAll() {
+
+	// check for keyboard movement
+	if (deltaMove) {
+		computePos(deltaMove);
+
+                // set the main window as active and
+                // ask for a redraw
+		glutSetWindow(mainWindow);
+		glutPostRedisplay();
+	}
+
+	renderScene();
+	renderScenesw1();
+	renderScenesw2();
+	renderScenesw3();
+}
+Doing this will cause our display function to be called repeatedly until deltaMove is set zero. This only occurs when the user releases the key, 
+as coded in the releaseKey function:
+
+void releaseKey(int key, int x, int y) {
+
+	switch (key) {
+		case GLUT_KEY_UP :
+		case GLUT_KEY_DOWN : deltaMove = 0;break;
+	}
+}

@@ -1,0 +1,81 @@
+How fast is your application really going? Sometimes we make small changes and we can’t be sure of the effect they had on the performance, 
+namely how do they affect the number of displayed frames per second. In this section we’ll see how we can use GLUT to count the number of frames per second. 
+Note that this shouldn’t be considered a true benchmark, just a guide value.
+
+GLUT provides a function that allows us to query many features of the system, one of them being the number of milliseconds from the call to glutInit. 
+The function is glutGet and the syntax is as follows:
+
+int glutGet(GLenum state);
+
+Parameters:
+
+state – specifies the value we want.
+This function can be use for a lot of purposes, for instance getting window coordinates or getting the openGL buffer’s depth. 
+In this section we’ll use it to get the number of milliseconds since the call to glutInit, i.e. the argument state is GLUT_ELAPSED_TIME.
+
+int time;
+
+...
+
+time = glutGet(GLUT_ELAPSED_TIME);
+Ok, now we’re going to use this function to compute the number of frames per second of our application. The frame rate varies from frame to frame, i.e.
+not all frames take the same time to render because our application is not alone. The operating system takes its toll, 
+and the camera maybe moving thereby changing what’s being rendered. Therefore we’re going to avoid computing the frame rate in each and every frame, 
+and instead we’re going to compute it roughly once per second. This also provides a more accurate figure, since its an average.
+
+We’re going to declare three variables: frame, time, and timebase, where timebase and frame are both initialized to zero.
+
+int frame=0,time,timebase=0;
+The meaning of these variables is:
+
+frame – the number of frames since we last computed the frame rate
+time – the current number of milliseconds
+timebase – the time when we last computed the frame rate
+The following piece of code, when placed inside the registered idle function, will do the job (see bellow for a detailed description):
+
+	...
+
+	frame++;
+	time=glutGet(GLUT_ELAPSED_TIME);
+
+	if (time - timebase > 1000) {
+		fps = frame*1000.0/(time-timebase));
+	 	timebase = time;
+		frame = 0;
+	}
+	...
+We start by increasing the number of frames, i.e. increasing the variable frame. We then get the current time into time. 
+Next we compare it with timebase to check if a second has elapsed, i.e. if the difference between time and timebase is greater than 1000 millisecond. 
+If this is not the case then we skip the computation part. However when the difference is larger than one second we’ll do the computation.
+
+Computing the difference between time and timebase gives us the number of milliseconds elapsed since we last computed the number of frames per second. 
+Dividing 1000 by the number of milliseconds elapsed provides the inverse of the number of seconds elapsed. 
+All its left is to multiply this value by the number of frames rendered since the last time the frame rate was computed, and we get the number of frames per second. 
+Finally we reset timebase to the current number of milliseconds, and frame to zero.
+
+Note that when the application starts timebase is zero, you’ll have to wait one second to get the first value. 
+This first few values however are very misleading because they include the time required to initialize the window. 
+If you run some tests you’ll see that this value is much lower than the actual frame rate.
+
+If you want to print the number of frames per second you can use the following piece of code
+
+	...
+	frame++;
+	time=glutGet(GLUT_ELAPSED_TIME);
+	if (time - timebase > 1000) {
+		sprintf(s,"FPS:%4.2f",
+			frame*1000.0/(time-timebase));
+		timebase = time;
+		frame = 0;
+	}
+
+	glColor3f(0.0f,1.0f,1.0f);
+
+	glPushMatrix();
+	glLoadIdentity();
+	setOrthographicProjection();
+	renderBitmapString(30,35,(void *)font,s);
+	glPopMatrix();
+	restorePerspectiveProjection();
+
+	...

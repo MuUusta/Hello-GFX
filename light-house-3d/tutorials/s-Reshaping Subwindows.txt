@@ -1,0 +1,86 @@
+The callback for the reshape function needs to do two things: it resizes the subwindows, and recomputes the projection matrices for each subwindow. 
+In our case we’re not rendering any geometry in the main window, so we’ll skip recomputing the projection matrix for the main window.
+
+First let’s introduce the functions to resize, and reposition the subwindows.
+
+void glutPositionWindow(int x, int y);
+void glutReshapeWindow(int width, int height);
+
+Parameters:
+
+x,y – the top left corner of the window
+width, height – the dimensions of the window in pixels
+These two function act on the current window so first we must set a particular window as being the current window. 
+In order to do this we need to have the window identifier at hand and call glutSetWindow. The syntax is as follows:
+
+void glutSetWindow(int windowIdentifier);
+
+Parameters:
+
+windowIdentifier – the value returned when the window is created.
+If we need to know which window is the current window we can use GLUTs function glutGetWindow.
+
+int glutGetWindow();
+
+The return value of this function is the identifier of the current window.
+
+Before we do any calls to position and resize the window we must set each subwindow as the current window. 
+The following piece of code provides the reshape function, in our case the function is called changeSize. 
+As mentioned in the PREVIOUS section we have defined a callback for reshaping the window only for the main window. 
+This is enough because by default the user can only resize the main window.
+
+Since, in our example, the projection is similar to all subwindows we are going to define a function for this purpose, and call it for each subwindow.
+
+int w,h, border=6;
+...
+ 
+
+void setProjection(int w1, int h1)
+{
+	float ratio;
+	// Prevent a divide by zero, when window is too short
+	// (you cant make a window of zero width).
+	ratio = 1.0f * w1 / h1;
+	// Reset the coordinate system before modifying
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	// Set the viewport to be the entire window
+        glViewport(0, 0, w1, h1);
+
+	// Set the clipping volume
+	gluPerspective(45,ratio,0.1,1000);
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void changeSize(int w1,int h1) {
+
+	if(h1 == 0)
+		h1 = 1;
+
+	// we're keeping these values cause we'll need them latter
+	w = w1;
+	h = h1;
+
+	// set subwindow 1 as the active window
+	glutSetWindow(subWindow1);
+	// resize and reposition the sub window
+	glutPositionWindow(border,border);
+	glutReshapeWindow(w-2*border, h/2 - border*3/2);
+	setProjection(w-2*border, h/2 - border*3/2);
+
+	// set subwindow 2 as the active window
+	glutSetWindow(subWindow2);
+	// resize and reposition the sub window
+	glutPositionWindow(border,(h+border)/2);
+	glutReshapeWindow(w/2-border*3/2, h/2 - border*3/2);
+	setProjection(w/2-border*3/2,h/2 - border*3/2);
+
+	// set subwindow 3 as the active window
+	glutSetWindow(subWindow3);
+	// resize and reposition the sub window
+	glutPositionWindow((w+border)/2,(h+border)/2);
+	glutReshapeWindow(w/2-border*3/2,h/2 - border*3/2);
+	setProjection(w/2-border*3/2,h/2 - border*3/2);
+}
+

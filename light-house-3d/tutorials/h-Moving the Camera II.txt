@@ -1,0 +1,96 @@
+In this section the last example is revisited. This time we’ll use the advanced keyboard features.
+
+The approach is to test when the key is pressed to start the motion, and only stop it when the key is released. 
+Hence we are going to disable callbacks when the key repeat occurs with glutIgnoreKeyRepeat.
+
+When a key is pressed we are going to set a variable to a non-zero value. Once the key is released the variable will be set to zero again.
+
+Since no callbacks are active between key pressed and key released we have to check these variables in the render function 
+and update the camera position and orientation accordingly.
+
+In the initialization section we have two new variables: deltaAngle and deltaMove. These variables control the rotation and movement of the camera respectively. 
+When non-zero some camera action will occur, when zero the camera is still. These two variables take an initial zero value, meaning that initially the camera is still.
+
+In the beginning of our code we are going to add two variables to keep track of the key status, one for the orientation, deltaAngle and another for the position, deltaMove.
+
+// the key states. These variables will be zero
+//when no key is being presses
+float deltaAngle = 0.0f;
+float deltaMove = 0;
+In the render function we will add some code at the beginning to check these vars and update the position and orientation accordingly.
+
+void renderScene(void) {
+
+	if (deltaMove)
+		computePos(deltaMove);
+	if (deltaAngle)
+		computeDir(deltaAngle);
+	...
+Where computePos and computeDir are defined as:
+
+void computePos(float deltaMove) {
+
+	x += deltaMove * lx * 0.1f;
+	z += deltaMove * lz * 0.1f;
+}
+
+void computeDir(float deltaAngle) {
+
+	angle += deltaAngle;
+	lx = sin(angle);
+	lz = -cos(angle);
+}
+The functions that respond to the events of key pressed and key released are also going to suffer modifications. 
+When a key is pressed we are only setting the respective variable to a non-zero value. When the key is released the variable will go back to zero.
+
+void pressKey(int key, int xx, int yy) {
+
+	switch (key) {
+		case GLUT_KEY_LEFT : deltaAngle = -0.01f; break;
+		case GLUT_KEY_RIGHT : deltaAngle = 0.01f; break;
+		case GLUT_KEY_UP : deltaMove = 0.5f; break;
+		case GLUT_KEY_DOWN : deltaMove = -0.5f; break;
+	}
+}
+
+void releaseKey(int key, int x, int y) {
+
+	switch (key) {
+		case GLUT_KEY_LEFT :
+		case GLUT_KEY_RIGHT : deltaAngle = 0.0f;break;
+		case GLUT_KEY_UP :
+		case GLUT_KEY_DOWN : deltaMove = 0;break;
+	}
+}
+Finally, in the main function there are three new lines:
+
+glutIgnoreKeyRepeat is called with a non-zero parameter to ask GLUT to stop reporting key repeats. 
+Afterwards, glutSpecialUpFunc is called to register the callback function to process the key up event.
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// register callbacks
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+	glutIdleFunc(renderScene);
+	glutSpecialFunc(pressKey);
+
+	// here are the new entries
+	glutIgnoreKeyRepeat(1);
+	glutSpecialUpFunc(releaseKey);
+
+	// OpenGL init
+	glEnable(GL_DEPTH_TEST);
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+
+	return 1;
+}

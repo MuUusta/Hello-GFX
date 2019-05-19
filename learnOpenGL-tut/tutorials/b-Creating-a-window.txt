@@ -1,0 +1,167 @@
+The first thing we need to do to create stunning graphics is to create an OpenGL context and an application window to draw in. However, 
+those operations are specific per operating system and OpenGL purposefully tries to abstract from these operations. This means we have to create a window, 
+define a context and handle user input all by ourselves.
+
+Luckily, there are quite a few libraries out there that already provide the functionality we seek, some specifically aimed at OpenGL. 
+Those libraries save us all the operation-system specific work and give us a window and an OpenGL context to render in. Some of the more popular libraries are GLUT, SDL, SFML and GLFW. 
+For our tutorials we will be using GLFW.
+
+GLFW
+GLFW is a library, written in C, specifically targeted at OpenGL providing the bare necessities required for rendering goodies to the screen. 
+It allows us to create an OpenGL context, define window parameters and handle user input which is all that we need. 
+
+
+
+The focus of this and the next tutorial is getting GLFW up and running, making sure it properly creates an OpenGL context and that it properly displays a window for us to render in. 
+The tutorial will take a step-by-step approach in retrieving, building and linking the GLFW library. For this tutorial we will use the Microsoft Visual Studio 2015 IDE 
+(note that the process is the same on the more recent visual studio versions). 
+If you're not using Visual Studio (or an older version) don't worry, the process will be similar on most other IDEs.
+
+Building GLFW
+GLFW can be obtained from their webpage's download page. GLFW already has pre-compiled binaries and header files for Visual Studio 2013/2015, 
+but for completeness' sake we will compile GLFW ourselves from the source code. So let's download the Source package.
+
+
+
+Once you've downloaded the source package, extract it and open its content. We are only interested in a few items:
+
+The resulting library from compilation.
+The include folder.
+Compiling the library from the source code guarantees that the resulting library is perfectly tailored for your CPU/OS, 
+a luxury pre-compiled binaries do not always provide (sometimes, pre-compiled binaries are not available for your system). 
+The problem with providing source code to the open world however is that not everyone uses the same IDE for developing their application, 
+which means the project/solution files provided may not be compatible with other people's IDEs. 
+So people then have to build their own project/solution with the given .c/.cpp and .h/.hpp files, which is cumbersome. Exactly for those reasons there is a tool called CMake.
+
+CMake
+CMake is a tool that can generate project/solution files of the user's choice (e.g. Visual Studio, Code::Blocks, Eclipse) from a collection of source code files using pre-defined CMake scripts. 
+This allows us to generate a Visual Studio 2012 project file from GLFW's source package which we can use to compile the library. 
+First we need to download and install CMake that can be found on their download page. I used the Win32 Installer.
+
+Once CMake is installed you can choose to run CMake from the command line or via their GUI. Since we're not trying to overcomplicate things we're going to use the GUI. 
+CMake requires a source code folder and a destination folder for the binaries. 
+As the source code folder we're going to choose the root folder of the downloaded GLFW source package 
+and for the build folder we're creating a new directory build and then select that directory.
+
+
+
+Once the source and destination folders have been set, click the Configure button so CMake can read the required settings and the source code. 
+We then have to choose the generator for the project and since we're using Visual Studio 2015 we will choose the Visual Studio 14 option (Visual Studio 2015 is also known as Visual Studio 14). 
+CMake will then display the possible build options to configure the resulting library. We can leave them to their default values and click Configure again to store the settings. 
+Once the settings have been set, we can click Generate and the resulting project files will be generated in your build folder.
+
+Compilation
+In the build folder a file named GLFW.sln can be found and we open it with Visual Studio 2015. 
+Since CMake generated a project file that already contains the proper configuration settings we can hit the Build Solution button 
+and the resulting compiled library can be found in src/Debug named glfw3.lib (note, we're using version 3).
+
+Once the library is generated we need to make sure the IDE knows where to find the library and the include files. There are two approaches in doing this:
+
+We find the /lib and /include folders of the IDE/Compiler and add the content of GLFW's include folder to the IDE's /include folder and similarly add glfw3.lib to the IDE's /lib folder. 
+This works, but this is not the recommended approach. It's hard to keep track of your library/include files and a new installation of your IDE/Compiler will result in lost files.
+The recommended approach is to create a new set of directories at a location of your choice that contains all the header files/libraries 
+from third parties to which you can refer to using your IDE/Compiler. 
+I personally use a single folder that contains a Libs and Include folder where I store all my library and header files respectively for OpenGL projects. 
+Now all my third party libraries are organized within a single location (that could be shared across multiple computers). The requirement is however, 
+that each time we create a new project we have to tell the IDE where to find those directories.
+
+Once the required files are stored at a location of your choice, we can start creating our first OpenGL project with GLFW!
+Our first project
+First, let's open up Visual Studio and create a new project. Choose Visual C++ if multiple options are given and take the Empty Project (don't forget to give your project a suitable name). 
+We now have a workspace to create our very first OpenGL application!
+
+Linking
+In order for the project to use GLFW we need to link the library with our project. This can be done by specifying we want to use glfw3.lib in the linker settings, 
+but our project does not yet know where to find glfw3.lib since we pasted our third party libraries to different directories. We thus need to add those directories to the project first.
+
+We can add those directories (where VS should search for libraries/include-files) by going to the project properties 
+(right-click the project name in the solution explorer) and then go to VC++ Directories as can be seen in the image below:
+
+
+
+
+From there on out you can add your own directories to let the project know where to search. 
+This can be done by manually inserting it into the text or clicking the appropriate location string and selecting the <Edit..> option
+ where you'll see the following image for the Include Directories case:
+
+
+
+Here you can add as many extra directories as you'd like and from that point on the IDE will also search those directories when searching for header files, 
+so as soon as your Include folder from GLFW is included, you will be able to find all the header files for GLFW by including <GLFW/..>. The same applies for the library directories.
+
+Since VS can now find all the required files we can finally link GLFW to the project by going to the Linker tab and selecting input:
+
+
+
+To then link to a library you'd have to specify the name of the library to the linker. Since the library name is glfw3.lib, 
+we add that to the Additional Dependencies field (either manually or using the <Edit..> option) and from that point on GLFW will be linked when we compile. 
+Aside from GLFW you should also add a link entry to the OpenGL library, but this might differ per operating system:
+
+OpenGL library on Windows
+If you're on Windows the OpenGL library opengl32.lib comes with the Microsoft SDK which is installed by default when you install Visual Studio. 
+Since this tutorial uses the VS compiler and is on windows we add opengl32.lib to the linker settings.
+
+OpenGL library on Linux
+On Linux systems you need to link to the libGL.so library by adding -lGL to your linker settings. 
+If you can't find the library you probably need to install any of the Mesa, NVidia or AMD dev packages, but I won't delve into the details since this is platform-specific (plus I'm not a Linux expert).
+
+Then, once you've added both the GLFW and OpenGL library to the linker settings you can include the headers of GLFW as follows:
+
+
+#include <GLFW\glfw3.h>
+
+
+
+This concludes the setup and configuration of GLFW.
+
+GLAD
+We're still not quite there yet, since there is one other thing we still need to do. 
+Since OpenGL is a standard/specification it is up to the driver manufacturer to implement the specification to a driver that the specific graphics card supports. 
+Since there are many different versions of OpenGL drivers, the location of most of its functions is not known at compile-time and needs to be queried at run-time. 
+It is then the task of the developer to retrieve the location of the functions he/she needs and store them in function pointers for later use. 
+Retrieving those locations is OS-specific and in Windows it looks something like this:
+
+
+// define the function's prototype
+typedef void (*GL_GENBUFFERS) (GLsizei, GLuint*);
+// find the function and assign it to a function pointer
+GL_GENBUFFERS glGenBuffers  = (GL_GENBUFFERS)wglGetProcAddress("glGenBuffers");
+// function can now be called as normal
+unsigned int buffer;
+glGenBuffers(1, &buffer);
+
+As you can see the code looks complex and it's a cumbersome process to do this for each function you might need that is not yet declared. Thankfully, 
+there are libraries for this purpose as well where GLAD is a popular and up-to-date library.
+
+Setting up GLAD
+GLAD is an open source library that manages all that cumbersome work we talked about. GLAD has a slightly different configuration setup than most common open source libraries. 
+GLAD uses a web service where we can tell GLAD for which version of OpenGL we'd like to define and load all relevant OpenGL functions according to that version.
+
+Go to the web service, make sure the language is set to C++ and in the API section, 
+select an OpenGL version of at least 3.3 (which is what we'll be using for these tutorials; higher versions are fine as well). 
+Also make sure the profile is set to Core and that the Generate a loader option is ticked. Ignore the extensions (for now) and click Generate to produce the resulting library files.
+
+GLAD by now should have provided you a zip file containing two include folders, and a single glad.c file. 
+Copy both include folders (glad and KHR) into your include(s) directoy (or add an extra item pointing to these folders), and add the glad.c file to your project.
+
+After the previous steps, you should be able to add the following include directive above your file:
+
+#include <glad/glad.h> 
+
+Hitting the compile button shouldn't give you any errors, at which point we're set to go for the next tutorial where we'll discuss how we can actually use GLFW and GLAD 
+to configure an OpenGL context and spawn a window. Be sure to check that all your include and library directories are correct 
+and that the library names in the linker settings match with the corresponding libraries, check any of the additional resources below.
+
+Additional resources
+:Window Guide: official GLFW guide on setting up and configuring a GLFW window.
+:provides great info about the compilation/linking process of your application and a large list of possible errors (plus solutions) that might come up.
+:building GLFW in Code::Blocks IDE.
+:short overview of how to run CMake on both Windows and Linux.
+:an autotools tutorial by Wouter Verholst on how to write a build system in Linux, specifically targeted for these tutorials.
+:a simple boilerplate project that comes pre-configured with all relevant libraries; great for if you want a sample project for the LearnOpenGL tutorials without the hassle of 
+having to compile all the libraries yourself.
+
+
+
+
+

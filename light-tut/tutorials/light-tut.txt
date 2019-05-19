@@ -1,0 +1,175 @@
+In this tutorial, we are going to explain how to create a light source and how to set the object's materials
+To see it gets affected by the light when the light source is near, far or even On/Off.
+
+First of all, we need to tell OpenGL to enable lighting in general:
+	glEnable(GL_LIGHTING);
+
+We can create more than one light source, but in our case, we will just create one so we have to enable it,
+You will notice that the light source list is treated as if it's an array, so the first light source has the index 0:
+	glEnable(GL_LIGHT0);
+
+Note: "you don't have to start with GL_LIGHT0, you can set your first light source to GL_LIGHT1 or GL_LIGHT2 .. etc"
+
+Now we need to set some light properties like the color or the position of the light source
+
+let's set some variables:
+
+//Light position will be an array of float numbers (x-axis, y-axis, z-axis, w-component)
+	GLfloat LightPosition[] = { 0.0f, 0.0f, 2.0f, 1.0f };
+
+//Light Ambient will be an array of float numbers (red, green, blue, alpha)
+	GLfloat LightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+
+//Light Diffuse will be an array of float numbers (red, green, blue, alpha)
+	GLfloat LightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+//Light Specular will be an array of float numbers (red, green, blue, alpha)
+	GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+these are some simple explanations/examples so you can understand the mentioned components role in our program, you can surf the internet
+if you want to know the details behind every concept.
+
+Ambient component: 
+In our world, you will notice that even if it's dark and no light sources around, objects still have a color
+like there is a very weak light source somewhere, so that is Ambient light.
+
+
+Diffuse component: 
+This is the direct impact of the light source on the object.
+
+Specular component: 
+When light hits a shiny object you will notice a bright spot over the object, that's the specular component.
+
+
+Now let's set these variables to our light source by the following function:
+
+		glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);  // add lighting. (ambient)
+    	glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);  // add lighting. (diffuse).
+    	glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);  // add lighting. (specular).
+    	glLightfv(GL_LIGHT0, GL_POSITION,LightPosition); // set light position.
+
+The glLightfv function returns light source parameter values.
+
+Syntax: glLightfv(GLenum  light, GLenum  pname, const GLfloat *params);
+Parameters:
+-light
+	The identifier of a light. The number of possible lights depends on the implementation, but at least eight lights are supported. 
+	They are identified by symbolic names of the form GL_LIGHTi where i is a value: 0 to GL_MAX_LIGHTS - 1.
+
+-pname
+
+	A light source parameter for light. The following symbolic names are accepted.
+
+-params
+
+	Specifies the value that parameter pname of light source light will be set to.
+
+Value								Meaning
+
+GL_AMBIENT			The params parameter contains four floating-point values that specify the ambient RGBA intensity of the light. 
+					Floating-point values are mapped directly. Neither integer nor floating-point values are clamped. 
+					The default ambient light intensity is (0.0, 0.0, 0.0, 1.0). 
+
+GL_DIFFUSE			The params parameter contains four floating-point values that specify the diffuse RGBA intensity of the light. 
+					Floating-point values are mapped directly. Neither integer nor floating-point values are clamped. 
+					The default diffuse intensity is (0.0, 0.0, 0.0, 1.0) for all lights other than light zero. 
+					The default diffuse intensity of light zero is (1.0, 1.0, 1.0, 1.0). 
+
+GL_SPECULAR			The params parameter contains four floating-point values that specify the specular RGBA intensity of the light. 
+					Floating-point values are mapped directly. Neither integer nor floating-point values are clamped. 
+					The default specular intensity is (0.0, 0.0, 0.0, 1.0) for all lights other than light zero. 
+					The default specular intensity of light zero is (1.0, 1.0, 1.0, 1.0).
+
+GL_POSITION			The params parameter contains four floating-point values that specify the position of the light in homogeneous object coordinates. 
+					Both integer and floating-point values are mapped directly. Neither integer nor floating-point values are clamped. 
+					The position is transformed by the modelview matrix when glLightfv is called (just as if it were a point), 
+					and it is stored in eye coordinates. If the w component of the position is 0.0, the light is treated as a directional source. 
+					Diffuse and specular lighting calculations take the light's direction, but not its actual position, into account, 
+					and attenuation is disabled. Otherwise, diffuse and specular lighting calculations are based on the actual location of the light
+					in eye coordinates, and attenuation is enabled. The default position is (0,0,1,0); thus, the default light source is directional, 
+					parallel to, and in the direction of the -z axis.
+
+
+Now we are done with the light, lets set the object's material color same as the light color, you can change that if you want:
+
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, LightDiffuse);
+    	glMaterialfv(GL_FRONT, GL_SPECULAR, LightSpecular);
+    	GLfloat shininess[] = {50};
+    	glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+
+Note: "shininess is the value of how shiny is that object when this value decreases the object becomes more shiny value [0 - 128]
+
+The glMaterialfv function specifies material parameters for the lighting model.
+
+Syntax: glMaterialfv(GLenum  face, GLenum  pname, const GLfloat *params);
+Parameters:
+-face
+
+	The face or faces that are being updated. Must be one of the following: GL_FRONT, GL_BACK, or GL_FRONT and GL_BACK.
+
+-pname
+
+	The material parameter of the face or faces being updated. The parameters that can be specified using glMaterialfv, and their interpretations by the lighting equation, are as follows.
+
+params
+
+	The value to which parameter GL_SHININESS will be set.
+
+Value								Meaning
+
+GL_AMBIENT			The params parameter contains four floating-point values that specify the ambient RGBA reflectance of the material. 
+					Integer values are mapped linearly such that the most positive representable value maps to 1.0, 
+					and the most negative representable value maps to -1.0. Floating-point values are mapped directly. 
+					Neither integer nor floating-point values are clamped. 
+					The default ambient reflectance for both front-facing and back-facing materials is (0.2, 0.2, 0.2, 1.0). 
+
+GL_DIFFUSE			The params parameter contains four floating-point values that specify the diffuse RGBA reflectance of the material. 
+					Integer values are mapped linearly such that the most positive representable value maps to 1.0, 
+					and the most negative representable value maps to -1.0. Floating-point values are mapped directly. 
+					Neither integer nor floating-point values are clamped. 
+					The default diffuse reflectance for both front-facing and back-facing materials is (0.8, 0.8, 0.8, 1.0). 
+
+GL_SPECULAR			The params parameter contains four floating-point values that specify the specular RGBA reflectance of the material. 
+					Integer values are mapped linearly such that the most positive representable value maps to 1.0, 
+					and the most negative representable value maps to -1.0. Floating-point values are mapped directly. 
+					Neither integer nor floating-point values are clamped. 
+					The default specular reflectance for both front-facing and back-facing materials is (0.0, 0.0, 0.0, 1.0). 
+
+GL_EMISSION			The params parameter contains four floating-point values that specify the RGBA emitted light intensity of the material. 
+					Integer values are mapped linearly such that the most positive representable value maps to 1.0, 
+					and the most negative representable value maps to -1.0. Floating-point values are mapped directly. 
+					Neither integer nor floating-point values are clamped. 
+					The default emission intensity for both front-facing and back-facing materials is (0.0, 0.0, 0.0, 1.0). 
+
+GL_SHININESS			The param parameter is a single integer value that specifies the RGBA specular exponent of the material. 
+					Integer values are mapped directly. Only values in the range [0, 128] are accepted. 
+					The default specular exponent for both front-facing and back-facing materials is 0. 
+
+Now in our display function we are going to update light's position to move in circular motion and translate our scene 6.0f to the back:
+
+		glTranslatef(0.0f,0.0f,-6.0f);
+    	glLightfv(GL_LIGHT0, GL_POSITION,LightPosition); // set light position.
+
+Then we are going to render a cube as a light bulb & has the same position as the light:
+
+    	//render light source cube
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(LightPosition[0],LightPosition[1],LightPosition[2]);
+	glutSolidCube(0.2);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+The following code updates and calculate the new x and z coordinates of the light:
+
+    //update & calculate light position
+    LightPosition[0] = cos(glutGet(GLUT_ELAPSED_TIME)*0.001) * 2; 
+    //LightPosition[1] = sin(glutGet(GLUT_ELAPSED_TIME)*0.001) * 2;
+    LightPosition[1] = 1.0f;
+    LightPosition[2] = sin(glutGet(GLUT_ELAPSED_TIME)*0.001) * 2; 
+
+Finally we render a sphere and see how it's going to look like when light hit it:
+
+    	//render sphere
+	glutSolidSphere(1,50,50);
+

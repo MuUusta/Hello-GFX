@@ -1,0 +1,54 @@
+A bitmap font is basically a 2D font. Although we’ll place it in a 3D world, these fonts will have no thickness and can’t be rotated or scaled, 
+only translated. Furthermore, the font will always face the viewer, like a billboard. Although this can be seen as a potential disadvantage, 
+on the other hand we won’t have to worry about orienting the font to face the viewer
+
+In this section we’ll present the GLUT functions to put some bitmapped text on the screen. 
+We’re going to need one function to write a char: glutBitmapCharacter. The syntax is as follows:
+
+void glutBitmapCharacter(void *font, int character)
+
+Parameters:
+
+font – the name of the font to use (see bellow for a list of what’s available
+character – what to render, a letter, symbol, number, etc…
+The font options available are:
+
+GLUT_BITMAP_8_BY_13
+GLUT_BITMAP_9_BY_15
+GLUT_BITMAP_TIMES_ROMAN_10
+GLUT_BITMAP_TIMES_ROMAN_24
+GLUT_BITMAP_HELVETICA_10
+GLUT_BITMAP_HELVETICA_12
+GLUT_BITMAP_HELVETICA_18
+Some of the font names are recognizable so you’ll probably know what to expect, 
+nevertheless you’ll have the opportunity of trying all fonts in the example application via a pop-up menu.
+
+The following line of text exemplifies a call to the glutBitmapCharacter function to output a single character at the current raster position:
+
+glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,'3');
+One important thing to know is what is the actual raster position. The raster position can be set with the family of functions glRasterPos from the OpenGL library. 
+The syntax of two functions from this family is presented below.
+
+void glRasterPos2f(float x, float y);
+void glRasterPos3f(float x, float y, float z);
+
+Parameters:
+
+x, y, z – local coordinates for the text to appear
+The function glutBitmapCharacter renders the character at the required position and advances the current raster position by the width of the character. 
+Therefore, to render a string, successive calls to glutBitmapCharacter will suffice to achieve the desired output. 
+The following function renders a string starting at the specified raster position:
+
+void renderBitmapString(
+		float x,
+		float y,
+		float z,
+		void *font,
+		char *string) {
+
+  char *c;
+  glRasterPos3f(x, y,z);
+  for (c=string; *c != '\0'; c++) {
+    glutBitmapCharacter(font, *c);
+  }
+}

@@ -1,0 +1,357 @@
+Say you have a scene where you're drawing a lot of models where most of these models contain the same set of vertex data, but with different world transformations. Think of a scene filled with grass leaves: 
+each grass leave is a small model consisting of only a few triangles. You'll probably want to draw quite a few of them and your scene might end up with thousands or maybe tens of thousands of grass leaves 
+that you need to render each frame. Because each leaf consists of only a few triangles the leaf is rendered almost instantly, but all those thousands of render calls you'll have to make will drastically 
+reduce performance.
+
+If we were to actually render such a large amount of objects it will look a bit like this in code:
+
+
+for(unsigned int i = 0; i < amount_of_models_to_draw; i++)
+{
+    DoSomePreparations(); // bind VAO, bind textures, set uniforms etc.
+    glDrawArrays(GL_TRIANGLES, 0, amount_of_vertices);
+}
+When drawing many instances of your model like this you'll quickly reach a performance bottleneck because of the many drawing calls. Compared to rendering the actual vertices, telling the GPU to render 
+your vertex data with functions like glDrawArrays or glDrawElements eats up quite some performance since OpenGL must make necessary preparations before it can draw your vertex data (like telling the GPU 
+which buffer to read data from, where to find vertex attributes and all this over the relatively slow CPU to GPU bus). So even though rendering your vertices is super fast, giving your GPU the commands to 
+render them isn't.
+
+It would be much more convenient if we could send some data over to the GPU once and then tell OpenGL to draw multiple objects with a single drawing call using this data. Enter instancing.
+
+Instancing is a technique where we draw many objects at once with a single render call, saving us all the CPU -> GPU communications each time we need to render an object; this only has to be done once. 
+To render using instancing all we need to do is change the render calls glDrawArrays and glDrawElements to glDrawArraysInstanced and glDrawElementsInstanced respectively. These instanced versions of the 
+classic rendering functions take an extra parameter called the instance count that sets the number of instances we want to render. We thus sent all the required data to the GPU only once, and then tell 
+the GPU how it should draw all these instances with a single call. The GPU then renders all these instances without having to continually communicate with the CPU.
+
+By itself this function is a bit useless. Rendering the same object a thousand times is of no use to us since each of the rendered objects are rendered exactly the same and thus also at the same location; 
+we would only see one object! For this reason GLSL embedded another built-in variable in the vertex shader called gl_InstanceID.
+
+When drawing via one of the instanced rendering calls, gl_InstanceID is incremented for each instance being rendered starting from 0. If we were to render the 43th instance for example, gl_InstanceID would 
+have the value 42 in the vertex shader. Having a unique value per instance means we could now for example index into a large array of position values to position each instance at a different location in 
+the world.
+
+To get a feel for instanced drawing we're going to demonstrate a simple example that renders a hundred 2D quads in normalized device coordinates with just one render call. We accomplish this by adding a 
+small offset to each instanced quad by indexing a uniform array of 100 offset vectors. The result is a neatly organized grid of quads that fill the entire window:
+
+
+Each quad consists of 2 triangles with a total of 6 vertices. Each vertex contains a 2D NDC position vector and a color vector. Below is the vertex data used for this example - the triangles are quite small 
+to properly fit the screen in large quantities:
+
+
+float quadVertices[] = {
+    // positions     // colors
+    -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+     0.05f, -0.05f,  0.0f, 1.0f, 0.0f,
+    -0.05f, -0.05f,  0.0f, 0.0f, 1.0f,
+
+    -0.05f,  0.05f,  1.0f, 0.0f, 0.0f,
+     0.05f, -0.05f,  0.0f, 1.0f, 0.0f,   
+     0.05f,  0.05f,  0.0f, 1.0f, 1.0f		    		
+};  
+The colors of the quads are accomplished with the fragment shader that receives a forwarded color vector from the vertex shader and sets it as its color output:
+
+
+#version 330 core
+out vec4 FragColor;
+  
+in vec3 fColor;
+
+void main()
+{
+    FragColor = vec4(fColor, 1.0);
+}
+Nothing new so far, but at the vertex shader it's starting to get interesting:
+
+
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec3 aColor;
+
+out vec3 fColor;
+
+uniform vec2 offsets[100];
+
+void main()
+{
+    vec2 offset = offsets[gl_InstanceID];
+    gl_Position = vec4(aPos + offset, 0.0, 1.0);
+    fColor = aColor;
+}  
+Here we defined a uniform array called offsets that contain a total of 100 offset vectors. Within the vertex shader we then retrieve an offset vector for each instance by indexing the offsets array 
+using gl_InstanceID. If we were to draw 100 quads using instanced drawing we'd get 100 quads located at different positions with just this vertex shader.
+
+We do need to actually set the offset positions that we calculate in a nested for-loop before we enter the game loop:
+
+
+glm::vec2 translations[100];
+int index = 0;
+float offset = 0.1f;
+for(int y = -10; y < 10; y += 2)
+{
+    for(int x = -10; x < 10; x += 2)
+    {
+        glm::vec2 translation;
+        translation.x = (float)x / 10.0f + offset;
+        translation.y = (float)y / 10.0f + offset;
+        translations[index++] = translation;
+    }
+}  
+Here we create a set of 100 translation vectors that contains a translation vector for all positions in a 10x10 grid. Aside from generating the translations array we'd also need to transfer the data to 
+the vertex shader's uniform array:
+
+
+shader.use();
+for(unsigned int i = 0; i < 100; i++)
+{
+    stringstream ss;
+    string index;
+    ss << i; 
+    index = ss.str(); 
+    shader.setVec2(("offsets[" + index + "]").c_str(), translations[i]);
+}  
+Within this snippet of code we transform the for-loop counter i to a string that we then use to dynamically create a location string for querying the uniform location. For each item in the offsets uniform 
+array we then set the corresponding translation vector.
+
+Now that all the preparations are finished we can start rendering the quads. To draw via instanced rendering we call glDrawArraysInstanced or glDrawElementsInstanced. Since we're not using an element 
+index buffer we're going to call the glDrawArrays version:
+
+
+glBindVertexArray(quadVAO);
+glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 100);  
+The parameters of glDrawArraysInstanced are exactly the same as glDrawArrays except the last parameter that sets the number of instances we want to draw. Since we want to display 100 quads in a 10x10 grid 
+we set it equal to 100. Running the code should now give you the familiar image of 100 colorful quads.
+
+Instanced arrays
+While the previous implementation works fine for this specific use case, whenever we are rendering a lot more than 100 instances (which is quite common) we will eventually hit a limit on the amount of 
+uniform data we can send to the shaders. Another alternative is called instanced arrays that is defined as a vertex attribute (allowing us to store much more data) that is only updated whenever the 
+vertex shader renders a new instance.
+
+With vertex attributes, each run of the vertex shader will cause GLSL to retrieve the next set of vertex attributes that belong to the current vertex. When defining a vertex attribute as an instanced 
+array however, the vertex shader only updates the content of the vertex attribute per instance instead of per vertex. This allows us to use the standard vertex attributes for data per vertex and use 
+the instanced array for storing data that is unique per instance.
+
+To give you an example of an instanced array we're going to take the previous example and represent the offset uniform array as an instanced array. We'll have to update the vertex shader by adding another 
+vertex attribute:
+
+
+#version 330 core
+layout (location = 0) in vec2 aPos;
+layout (location = 1) in vec3 aColor;
+layout (location = 2) in vec2 aOffset;
+
+out vec3 fColor;
+
+void main()
+{
+    gl_Position = vec4(aPos + aOffset, 0.0, 1.0);
+    fColor = aColor;
+}  
+We no longer use gl_InstanceID and can directly use the offset attribute without first indexing into a large uniform array.
+
+Because an instanced array is a vertex attribute, just like the position and color variables, we also need to store its content in a vertex buffer object and configure its attribute pointer. 
+We're first going to store the translations array (from the previous section) in a new buffer object:
+
+
+unsigned int instanceVBO;
+glGenBuffers(1, &instanceVBO);
+glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * 100, &translations[0], GL_STATIC_DRAW);
+glBindBuffer(GL_ARRAY_BUFFER, 0); 
+Then we also need to set its vertex attribute pointer and enable the vertex attribute:
+
+
+glEnableVertexAttribArray(2);
+glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+glBindBuffer(GL_ARRAY_BUFFER, 0);	
+glVertexAttribDivisor(2, 1);  
+What makes this code interesting is the last line where we call glVertexAttribDivisor. This function tells OpenGL when to update the content of a vertex attribute to the next element. 
+Its first parameter is the vertex attribute in question and the second parameter the attribute divisor. By default the attribute divisor is 0 which tells OpenGL to update the content of 
+the vertex attribute each iteration of the vertex shader. By setting this attribute to 1 we're telling OpenGL that we want to update the content of the vertex attribute when we start to 
+render a new instance. By setting it to 2 we'd update the content every 2 instances and so on. By setting the attribute divisor to 1 we're effectively telling OpenGL that the vertex attribute 
+at attribute location 2 is an instanced array.
+
+If we now were to render the quads again using glDrawArraysInstanced we'd get the following output:
+
+
+This is exactly the same as the previous example, but this time accomplished using instanced arrays, which allows us to pass a lot more data (as much as memory allows us to) to the vertex shader for 
+instanced drawing.
+
+For fun we could also slowly downscale each quad from top-right to bottom-left using gl_InstanceID again, because why not?
+
+
+void main()
+{
+    vec2 pos = aPos * (gl_InstanceID / 100.0);
+    gl_Position = vec4(pos + aOffset, 0.0, 1.0);
+    fColor = aColor;
+} 
+The result is that the first instances of the quads are drawn extremely small and the further we're in the process of drawing the instances, the closer gl_InstanceID gets to 100 and thus the more the 
+quads regain their original size. It's perfectly legal to use instanced arrays together with gl_InstanceID like this.
+
+
+If you're still a bit unsure about how instanced rendering works or want to see how everything fits together you can find the full source code of the application here.
+
+While fun and all, these examples aren't really good examples of instancing. Yes, they do give you an easy overview of how instancing works, but instancing is extremely useful when drawing an enormous 
+amount of similar objects which we haven't really been doing so far. For that reason we're going to venture into space in the next section to see the real power of instanced rendering.
+
+An asteroid field
+Imagine a scene where we have one large planet that's at the center of a large asteroid ring. Such an asteroid ring could contain thousands or tens of thousands of rock formations and quickly becomes 
+un-renderable on any decent graphics card. This scenario proves itself particularly useful for instanced rendering, since all the asteroids can be represented using a single model. Each single asteroid 
+then contains minor variations using a transformation matrix unique to each asteroid.
+
+To demonstrate the impact of instanced rendering we're first going to render a scene of asteroids flying around a planet without instanced rendering. The scene will contain a large planet model that can 
+be downloaded from here and a large set of asteroid rocks that we properly position around the planet. The asteroid rock model can be downloaded here.
+
+Within the code samples we load the models using the model loader we've previously defined in the model loading tutorials.
+
+To achieve the effect we're looking for we'll be generating a transformation matrix for each asteroid that we'll use as their model matrix. The transformation matrix is created by first translating the 
+rock somewhere in the asteroid ring - we'll also add a small random displacement value to this offset to make the ring look more natural. Then we apply a random scale and a random rotation around a 
+rotation vector. The result is a transformation matrix that transforms each asteroid somewhere around the planet while also giving it a more natural and unique look compared to other asteroids. 
+The result is a ring full of asteroids where each asteroid looks different to the other.
+
+
+unsigned int amount = 1000;
+glm::mat4 *modelMatrices;
+modelMatrices = new glm::mat4[amount];
+srand(glfwGetTime()); // initialize random seed	
+float radius = 50.0;
+float offset = 2.5f;
+for(unsigned int i = 0; i < amount; i++)
+{
+    glm::mat4 model = glm::mat4(1.0f);
+    // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+    float angle = (float)i / (float)amount * 360.0f;
+    float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+    float x = sin(angle) * radius + displacement;
+    displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+    float y = displacement * 0.4f; // keep height of field smaller compared to width of x and z
+    displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+    float z = cos(angle) * radius + displacement;
+    model = glm::translate(model, glm::vec3(x, y, z));
+
+    // 2. scale: Scale between 0.05 and 0.25f
+    float scale = (rand() % 20) / 100.0f + 0.05;
+    model = glm::scale(model, glm::vec3(scale));
+
+    // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+    float rotAngle = (rand() % 360);
+    model = glm::rotate(model, rotAngle, glm::vec3(0.4f, 0.6f, 0.8f));
+
+    // 4. now add to list of matrices
+    modelMatrices[i] = model;
+}  
+This piece of code might look a little daunting, but we basically transform the x and z position of the asteroid along a circle with a radius defined by radius and randomly displace each asteroid a 
+little around the circle by -offset and offset. We give the y displacement less of an impact to create a more flat asteroid ring. Then we apply scale and rotation transformations and store the 
+resulting transformation matrix in modelMatrices that is of size amount. Here we generate a total of 1000 model matrices, one per asteroid.
+
+After loading the planet and rock models and compiling a set of shaders, the rendering code then looks a bit like this:
+
+
+// draw Planet
+shader.use();
+glm::mat4 model = glm::mat4(1.0f);
+model = glm::translate(model, glm::vec3(0.0f, -3.0f, 0.0f));
+model = glm::scale(model, glm::vec3(4.0f, 4.0f, 4.0f));
+shader.setMat4("model", model);
+planet.Draw(shader);
+  
+// draw meteorites
+for(unsigned int i = 0; i < amount; i++)
+{
+    shader.setMat4("model", modelMatrices[i]);
+    rock.Draw(shader);
+}  
+First we draw the planet model that we translate and scale a bit to accommodate to the scene and then we draw a number of rock models equal to the amount of transformations we calculated. 
+Before we draw each rock however, we first set the corresponding model transformation matrix within the shader.
+
+The result is then a space-like scene where we can see a natural-looking asteroid ring around a planet:
+
+
+This scene contains a total of 1001 rendering calls per frame of which 1000 are of the rock model. You can find the source code for this scene here.
+
+As soon as we start to increase this number we will quickly notice that the scene stops running smoothly and the number of frames we're able to render per second reduces drastically. As soon as we set 
+amount to 2000 the scene already becomes so slow, it's difficult to move around.
+
+Let's now try to render the same scene, but this time using instanced rendering. We first need to adapt the vertex shader a little:
+
+
+#version 330 core
+layout (location = 0) in vec3 aPos;
+layout (location = 2) in vec2 aTexCoords;
+layout (location = 3) in mat4 instanceMatrix;
+
+out vec2 TexCoords;
+
+uniform mat4 projection;
+uniform mat4 view;
+
+void main()
+{
+    gl_Position = projection * view * instanceMatrix * vec4(aPos, 1.0); 
+    TexCoords = aTexCoords;
+}
+We're no longer using a model uniform variable, but instead declare a mat4 as a vertex attribute so we can store an instanced array of transformation matrices. However, when we declare a datatype as a 
+vertex attribute that is greater than a vec4 things work a bit differently. The maximum amount of data allowed as a vertex attribute is equal to a vec4. Because a mat4 is basically 4 vec4s, we have to 
+reserve 4 vertex attributes for this specific matrix. Because we assigned it a location of 3, the columns of the matrix will have vertex attribute locations of 3, 4, 5 and 6.
+
+We then have to set each of the attribute pointers of those 4 vertex attributes and configure them as instanced arrays:
+
+
+// vertex Buffer Object
+unsigned int buffer;
+glGenBuffers(1, &buffer);
+glBindBuffer(GL_ARRAY_BUFFER, buffer);
+glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &modelMatrices[0], GL_STATIC_DRAW);
+  
+for(unsigned int i = 0; i < rock.meshes.size(); i++)
+{
+    unsigned int VAO = rock.meshes[i].VAO;
+    glBindVertexArray(VAO);
+    // vertex Attributes
+    GLsizei vec4Size = sizeof(glm::vec4);
+    glEnableVertexAttribArray(3); 
+    glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+    glEnableVertexAttribArray(4); 
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
+    glEnableVertexAttribArray(5); 
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(2 * vec4Size));
+    glEnableVertexAttribArray(6); 
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(3 * vec4Size));
+
+    glVertexAttribDivisor(3, 1);
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+
+    glBindVertexArray(0);
+}  
+Note that we cheated a little by declaring the VAO variable of the Mesh as a public variable instead of a private variable so we could access its vertex array object. This is not the cleanest solution, 
+but just a simple modification to suit this tutorial. Aside from the little hack, this code should be clear. We're basically declaring how OpenGL should interpret the buffer for each of the matrix's 
+vertex attributes and that each of those vertex attributes is an instanced array.
+
+Next we take the VAO of the mesh(es) again and this time draw using glDrawElementsInstanced:
+
+
+// draw meteorites
+instanceShader.use();
+for(unsigned int i = 0; i < rock.meshes.size(); i++)
+{
+    glBindVertexArray(rock.meshes[i].VAO);
+    glDrawElementsInstanced(
+        GL_TRIANGLES, rock.meshes[i].indices.size(), GL_UNSIGNED_INT, 0, amount
+    );
+}  
+Here we draw the same amount of asteroids as the earlier example, but this time using instanced rendering. The results should be similar, but you'll start to really see the effect of instanced rendering 
+when we start to increase this amount variable. Without instanced rendering we were able to smoothly render around 1000 to 1500 asteroids. With instanced rendering we can now set this value to 100000 that, 
+with the rock model having 576 vertices, equals around 57 million vertices drawn each frame without any performance drops!
+
+
+This image was rendered with 100000 asteroids with a radius of 150.0f and an offset equal to 25.0f. You can find the source code of the instanced rendering demo here.
+
+
+As you can see, with the right type of environments instanced rendering can make an enormous difference to the rendering capabilities of your graphics card. For this reason, instanced rendering is commonly 
+used for grass, flora, particles and scenes like this - basically any scene with many repeating shapes can benefit from instanced rendering.
+
+
+

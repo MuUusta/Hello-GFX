@@ -1,0 +1,43 @@
+GLUT even allows us to change an entire menu in the middle of our application. Two functions are provided: glutSetMenu and glutGetMenu. The syntax for the former is:
+
+void glutSetMenu(int menu);
+
+Parameters:
+
+menu – the index of a previously created menu
+This function allows us to swap a menu, for instance if there is a change in the context of the application.
+
+The syntax for glutGetMenu is as follows:
+
+int glutGetMenu(void);
+
+This function returns the index of the current menu. Next we present an example where we use two menus that are swapped when the user presses F1.
+
+void processSpecialKeys(int c, int x, int y) {
+
+	if (!flag) {
+		if (c == GLUT_KEY_F1) {
+			int x = glutGetMenu();
+			if (x == menu1)
+				glutSetMenu(menu2);
+			else
+				glutSetMenu(menu1);
+			// don't forget to attach the menu!!!
+			glutAttachMenu(GLUT_RIGHT_BUTTON);
+		}
+	}
+}
+
+void createGLUTMenus() {
+
+	menu2 = glutCreateMenu(processMenuEvents);
+	glutAddMenuEntry("Blue",BLUE);
+	glutAddMenuEntry("Green",GREEN);
+	glutAddMenuEntry("Red",RED);
+
+	menu1 = glutCreateMenu(processMenuEvents);
+	glutAddMenuEntry("Red",RED);
+	glutAddMenuEntry("Green",GREEN);
+	glutAddMenuEntry("Blue",BLUE);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+}

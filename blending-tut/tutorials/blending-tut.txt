@@ -1,0 +1,44 @@
+This tutorial is about blending (Transparency)
+since we are still at the ( immediate mode ) tutorials so we are not gonna dive deep into blending for the sake of simplicity
+you will get to know all about it as soon as you start the ( retained mode ) tutorials series.
+
+So, first things first, what is blending?
+
+Blending in OpenGL is also commonly known as the technique to implement transparency within objects. Transparency is all about objects (or parts of them) 
+not having a solid color, but having a combination of colors from the object itself and any other object behind it with varying intensity. 
+A colored glass window is a transparent object; the glass has a color of its own, 
+but the resulting color contains the colors of all the objects behind the glass as well. This is also where the name blending comes from since we blend several colors 
+(of different objects) to a single color.Transparency thus allows us to see through objects.
+
+let's see how we can implement this
+
+add the following two lines in the init() or wherever you initialize GL properties:
+
+   glColor4f(1.0f,1.0f,1.0f,0.5f);		 
+   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+glColor4f(1.0f,1.0f,1.0f,0.5f)
+First 3 parameters are for full brightness, the last parameter (0.5) 50% transparent
+
+
+glBlendFunc(GL_SRC_ALPHA,GL_ONE)
+The glBlendFunc function specifies pixel arithmetic.
+
+Parameters:
+-sfactor:
+Specifies how the red, green, blue, and alpha source blending factors are computed. The initial value is GL_ONE.
+
+-dfactor:
+Specifies how the red, green, blue, and alpha destination blending factors are computed. The following symbolic constants are accepted: 
+GL_ZERO, GL_ONE, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA. 
+GL_CONSTANT_COLOR, GL_ONE_MINUS_CONSTANT_COLOR, GL_CONSTANT_ALPHA, and GL_ONE_MINUS_CONSTANT_ALPHA. The initial value is GL_ZERO.
+
+Then we have to tell openGL to turn blending on:
+   glEnable(GL_BLEND);
+
+We are done now setting blending and ready to render our scene, Note: don't try to render a complicated scene if you are not fully aware of GL_DEPTH_TEST or how to render objects sorted
+from the farthest to the nearst because you might notice some weird output.
+
+press (t) to increase transparency value and (shift+t) to decrease it in this example output.
+ 
+ 

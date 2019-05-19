@@ -1,0 +1,53 @@
+A stroke font is a font built with lines. As opposed to bitmap fonts, stroke fonts behave like any 3D object, i.e. 
+the characters can be rotated, scaled, and translated.
+
+In this section we’ll present the GLUT functions to put some stroke text on the screen. 
+Basically, you just need one function: glutStrokeCharacter. The syntax is as follows:
+
+void glutStrokeCharacter(void *font, int character)
+
+Parameters:
+
+font – the name of the font to use (see bellow for a list of what’s available
+character – what to render, a letter, symbol, number, etc…
+The font options available are:
+
+GLUT_STROKE_ROMAN
+GLUT_STROKE_MONO_ROMAN (fixed width font: 104.76 units wide).
+The following line of text exemplifies a call to the glutStrokeCharacter function to output a single character at the current local coordinates:
+
+glutStrokeCharacter(GLUT_STROKE_ROMAN,'3');
+As opposed to bitmap fonts, the render location for stroke fonts is specified in the same way as for any graphical primitive, i.e. 
+using translations, rotations and scales.
+
+The following function renders a string starting at the specified position in local world coordinates:
+
+void renderStrokeFontString(
+		float x,
+		float y,
+		float z,
+		void *font,
+		char *string) {
+
+	char *c;
+	glPushMatrix();
+	glTranslatef(x, y,z);
+
+	for (c=string; *c != '\0'; c++) {
+		glutStrokeCharacter(font, *c);
+	}
+
+	glPopMatrix();
+}
+Note: GLUT uses lines to draw stroke fonts, therefore we can specify the width of the line with the function glLineWidth. 
+This function takes a float specifying the width as the only parameter.
+
+As for bitmap fonts, GLUT provides a function that returns the width of a character. The function is glutStrokeWidth and the syntax is as follows:
+
+int glutStrokeWidth(void *font, int character);
+
+Parameters:
+
+font – one of the pre defined fonts in GLUT, see above.
+character – the character which we want to know the width
+

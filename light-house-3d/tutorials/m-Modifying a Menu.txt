@@ -1,0 +1,135 @@
+In certain situations a change of a menu entry may be desirable. GLUT allows us to change and delete menu entries. To alter a menu entry use:
+
+void glutChangeToMenuEntry(int entry, char *name, int value);
+
+Parameters:
+
+entry – the index of the entry, this must be between 1 and the total number of entries
+name – the name of the new entry
+value – The value that will be return to the callback function when the entry is selected.
+To swap a submenu use:
+
+void glutChangeToSubMenu(int entry, char *name, int menu);
+
+Parameters:
+
+entry – the index of the entry, this must be between 1 and the total number of entries
+name – the name of the new entry
+menu – The menu index to be used.
+To following function deletes an item.
+
+void glutRemoveMenuItem(int entry);
+
+Parameters:
+
+entry – the index of the entry, this must be between 1 and the total number of entries
+One last thing, you can query at any time the number of items of the current menu with glutGet.
+
+The next example shows an example of changing a menu:
+
+void processMenuEvents(int option) {
+
+	red = 0.0;
+	green = 0.0;
+	blue = 0.0;
+
+	switch (option) {
+		case RED :
+			red = 1.0; break;
+		case GREEN :
+			green = 1.0; break;
+		case BLUE :
+			blue = 1.0; break;
+		case WHITE :
+			red = 1.0;
+			green = 1.0;
+			blue = 1.0; break;
+	}
+}
+
+void processKeys(unsigned char c, int x, int y) {
+
+	int num = glutGet(GLUT_MENU_NUM_ITEMS);
+	switch (c) {
+		case 'a':
+			glutChangeToMenuEntry(1,"Blue",BLUE);
+			glutChangeToMenuEntry(3,"Red",RED);
+			break;
+		case 'b':
+			glutChangeToMenuEntry(3,"Blue",BLUE);
+			glutChangeToMenuEntry(1,"Red",RED);
+			break;
+		case 'c':
+			if (num > 3)
+				glutRemoveMenuItem(num);
+			break;
+		case 'd': if (num == 3)
+				glutAddMenuEntry("White",WHITE);
+			break;
+	}
+	glutSetMenu(menu);
+}
+
+void createGLUTMenus() {
+
+	menu = glutCreateMenu(processMenuEvents);
+	glutAddMenuEntry("Red",RED);
+	glutAddMenuEntry("Green",GREEN);
+	glutAddMenuEntry("Blue",BLUE);
+	glutAddMenuEntry("White",WHITE);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+Note that we changed the menu in the keyboard callback function as opposed to the menu callback function. 
+This is because we shouldn’t do any changes to a menu while it is in use. A menu is in use until the callback is over, 
+so we couldn’t change the menu’s structure inside the menu’s own callback.
+
+As mentioned before, when a menu is in use it can’t, or at least it shouldn’t, be altered. 
+In order to prevent messing up we must make sure if a menu is not in use before we change the menu entries. 
+GLUT allows us to register a callback function that will ba called whenever a menu pops-up, and when it goes away. 
+The function to register the callback is glutMenuStatusFunc.
+
+void glutMenuStatusFunc(void (*func)(int status, int x, int y);
+Parameters:
+
+func – the name of the callback function
+This function can be called in our main function, so we’ll just add it there.
+
+As seen by the signature of glutMenuStatusFunc the callback function must take three parameters. These are:
+
+status – one of GLUT_MENU_IN_USE or GLUT_MENU_NOT_IN_USE
+x – The left coordinate of the menu relative to the window client area.
+y – The top coordinate of the menu relative to the window client area.
+Bellow an example function is presented where a flag is set when the menu is in use.
+
+void processMenuStatus(int status, int x, int y) {
+
+	if (status == GLUT_MENU_IN_USE)
+		flag = 1;
+	else
+		flag = 0;
+}
+We can now use this flag when processing keyboard events as in the next example:
+
+void processKeys(unsigned char c, int x, int y) {
+
+	if (!flag) {
+		int num = glutGet(GLUT_MENU_NUM_ITEMS);
+		switch (c) {
+			case 'a':
+				glutChangeToMenuEntry(1,"Blue",BLUE);
+				glutChangeToMenuEntry(3,"Red",RED);
+				break;
+			case 'b':
+				glutChangeToMenuEntry(3,"Blue",BLUE);
+				glutChangeToMenuEntry(1,"Red",RED);
+				break;
+			case 'c':
+				if (num > 3)
+					glutRemoveMenuItem(num);
+				break;
+			case 'd': if (num == 3)
+					glutAddMenuEntry("White",WHITE);
+				break;
+		}
+	}
+}

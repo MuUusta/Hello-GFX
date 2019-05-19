@@ -1,0 +1,32 @@
+In this tutorial we are gonna learn how to add fog to our OpenGl program.
+
+the first thing we need to know is that we need to set a mode that does fog calculations, there are 3 modes that we can use:
+
+	GL_LINEAR
+	GL_EXP
+	GL_EXP2
+
+we are going to use GL_LINEAR since it gives more realistic fog effect than the others, the other two modes implementation will be provided at the end of the tutorial.
+
+so let's first set our mode:
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+
+then we need to specify fog color which is a white/greyish color, since it's not pure white and not pure grey let's set that to 0.6 or 0.7:
+	float color[] = {0.6, 0.6, 0.6, 1.0};
+
+now we have the variable we only have to set the variable as fog color:
+	glFogfv(GL_FOG_COLOR, color);
+	Note: "We have to set the glClearColor same as fog color or else you will notice that fog is produced only within the object!"
+	glClearColor(0.6, 0.6, 0.6, 1.0);
+
+Before enabling fog we need to set start/end points where the fog effect will be taken:
+  start point: is the point where the object is at maximum visibility.
+  end point : is the point where the object is at minimum visibility (not visible).
+
+	glFogf(GL_FOG_START, 0.0);
+    	glFogf(GL_FOG_END, 9.0);
+
+finally, all we need to do is enabling fog:
+	glEnable(GL_FOG);
+
+The output should be as in the picture below:

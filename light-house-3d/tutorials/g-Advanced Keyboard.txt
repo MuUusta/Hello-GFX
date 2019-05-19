@@ -1,0 +1,45 @@
+In this section we’re going to introduce four new functions to deal with the keyboard. 
+These functions work hand in hand to release us from the auto repeat problem that causes a small delay when waiting for the autorepeat to be operated.
+
+The first function we’re going to present in here allows us to disable the keyboard repeat. The syntax is as follows:
+
+
+int glutSetKeyRepeat(int repeatMode);
+Parameters:
+
+repeatMode – Enables, disables or restores the auto repeat mode. See bellow for possible values.
+
+Possible values for repeatMode are as follows:
+
+GLUT_KEY_REPEAT_OFF – disable auto repeat mode
+
+GLUT_KEY_REPEAT_ON – enable auto repeat mode
+
+GLUT_KEY_REPEAT_DEFAULT – reset the auto repeat mode to its default state.
+
+Note that this function works in a global basis, i.e. it will affect the repeat mode in all windows, not just the ones from our applications. 
+So beware, when using this function to disable the auto repeat mode, it is convinient to reset it to its default state before terminating the application.
+
+GLUT provides us with a safer approach, disabling callbacks for keyboard when the key repeat occurs. 
+This allows us to safely ignore key repeats in our application without affecting the other apps. The function that provides this functionality is presented next:
+
+
+int glutIgnoreKeyRepeat(int repeatMode);
+Parameters:
+repeatMode – zero enables auto-repeat, non-zero disables it.
+
+In any case, we’ll stop receiving callbacks when a key repeat occurs. However if you want to have an action performed while the key is being pressed, 
+you’ll need to know when the key is released. GLUT provides two functions that register callbacks when a key is released.
+
+
+void glutKeyboardUpFunc(void (*func)(unsigned char key,int x,int y));
+
+void glutSpecialUpFunc(void (*func)(int key,int x, int y));
+Parameters:
+
+func – the name of the callback function.
+
+The argument, a name of a function, will be the function that will handle these events. The parameters are the same as for when the user presses a key, 
+so if a memory refresh is required look in the previous section.
+
+In the next section we’ll show how to use this features to improve the application by revisiting the last example.

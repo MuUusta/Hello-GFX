@@ -1,0 +1,148 @@
+Run the app you’ve just created. You’ll see two windows: a console window and the OpenGL window. Now resize the window so that the height no longer matches the width. 
+The triangle gets distorted. This occurs because we’re not setting the perspective correctly. By default, 
+the perspective assumes that the ratio width/height is 1 and draws accordingly. 
+So when the ratio is changed, the perspective gets distorted. Therefore, every time the ratio changes the perspective needs to be recomputed.
+
+GLUT provides a way to define which function should be called when the window is resized, i.e. to register a callback for recomputing the perspective. 
+Furthermore, this function will also be called when the window is initially created, so that even if you’re initial window is not square things will look OK.
+
+GLUT registers the callback functionwhen you call glutReshapeFunc.
+
+void glutReshapeFunc(void (*func)(int width, int height));
+
+Parameters:
+
+func – The name of the function that will be responsible for setting the correct perspective when the window changes size.
+So what we must do is to go back to the main function we defined in the previous section, and add a call to glutReshapeFunc. 
+Lets call our own function to take care of window resizes changeSize. The code for the main function with the call to glutReshapeFunc added in is:
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D- GLUT Tutorial");
+
+        // register callbacks
+	glutDisplayFunc(renderScene);
+
+	// Here is our new entry in the main function
+	glutReshapeFunc(changeSize);
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+
+	return 1;
+}
+The next thing we need to do, is to define the function that we’ll take care of the perspective. As seen by the syntax of glutReshapeFunc, 
+the changeSize function has two arguments, 
+these are the new width and height, respectively, of the client area of the window, i.e. without the window decorations.
+
+void changeSize(int w, int h) {
+
+	// Prevent a divide by zero, when window is too short
+	// (you cant make a window of zero width).
+	if(h == 0)
+		h = 1;
+	float ratio = 1.0* w / h;
+
+	// Use the Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+
+        // Reset Matrix
+	glLoadIdentity();
+
+	// Set the viewport to be the entire window
+	glViewport(0, 0, w, h);
+
+	// Set the correct perspective.
+	gluPerspective(45,ratio,1,1000);
+
+	// Get Back to the Modelview
+	glMatrixMode(GL_MODELVIEW);
+}
+A few functions we’re introduced in this piece of code, so let’s go into a bit of detail in here before we all get lost. 
+The first step was to compute the ratio between the width and the height. Note that, in order for this to be done correctly, 
+we must take care of the case when the height of a window is actually zero, to prevent a division by zero.
+
+We then set the current matrix to be the projection matrix. This is the matrix that defines the viewing volume. We then load the identity matrix to initialize it. Afterwards, 
+we set the viewport to be the whole window, with the function glViewport. You can try with different values to see what you come up with, 
+the first two parameters are the bottom left corner, and the last two are the width and height of the viewport. 
+Note that these coordinates are relative to the client area of the window, not the screen. 
+If you do try with different values then don’t forget that the ratio computed above should also use the new width and height values.
+
+The gluPerspective function is part of another library for OpenGL, the OpenGL Utility Library, or GLU. GLU is a standard component of the implementation of OpenGL. 
+The gluPerspective function establishes the perspective parameters. 
+The first one defines the field of view angle in the yz plane, the ratio defines the relation between the width and height of the viewport. 
+The last two parameters define the near and far clipping planes. Anything closer than the near value, or further away than the far value, will be clipped away from the scene. 
+Beware with these settings, or you may end up not seeing anything at all.
+
+Finally, we tell OpenGL that all matrix operations that follow will use the modelview matrix. This is just to be on the safe side. Most operations, 
+such as setting the camera and transforming objects will use this matrix. The idea is to have always the modelview matrix as default.
+
+The code so far
+
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
+void changeSize(int w, int h) {
+
+	// Prevent a divide by zero, when window is too short
+	// (you cant make a window of zero width).
+	if (h == 0)
+		h = 1;
+
+	float ratio =  w * 1.0 / h;
+
+	// Use the Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+
+	// Reset Matrix
+	glLoadIdentity();
+
+	// Set the viewport to be the entire window
+	glViewport(0, 0, w, h);
+
+	// Set the correct perspective.
+	gluPerspective(45,ratio,1,100);
+
+	// Get Back to the Modelview
+	glMatrixMode(GL_MODELVIEW);
+}
+
+void renderScene(void) {
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glBegin(GL_TRIANGLES);
+		glVertex3f(-2,-2,-5.0);
+		glVertex3f(2,0.0,-5.0);
+		glVertex3f(0.0,2,-5.0);
+	glEnd();
+
+	glutSwapBuffers();
+}
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(320,320);
+	glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// register callbacks
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+
+	// enter GLUT event processing loop
+	glutMainLoop();
+
+	return 1;
+}

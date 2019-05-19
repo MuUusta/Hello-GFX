@@ -1,0 +1,14 @@
+This tutorial is made by Joey De Vries.
+
+Tutorial & Code tabs filled with a copy of the original source content from LearnOpenGL website.
+However, we've implemented each tutorial output for the user to avoid the hassle of making CPP files, Makefiles or having a hard time visualizing the output.
+
+Note: "if you are a beginner then don't search for the tutorial's code in this Application files, you can inspect and copy 
+	the current tutorial code in the (Code) tab."
+
+Click the link below to visit the mentioned website
+
+LearnOpengl Website:
+	
+This Tutorial Hyperlink:
+	

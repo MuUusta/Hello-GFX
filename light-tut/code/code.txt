@@ -1,0 +1,113 @@
+#include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h> 
+#include <math.h>
+
+GLfloat LightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+
+GLfloat LightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+GLfloat LightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+GLfloat LightPosition[] = { 0.0f, 0.0f, 2.0f, 1.0f };
+
+void timer(int)
+{
+  glutPostRedisplay();
+  glutTimerFunc(1000/60, timer, 0);
+}
+
+void init(GLsizei Width, GLsizei Height)
+{
+
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);	// This Will Clear The Background Color To Black
+    glEnable(GL_DEPTH_TEST);			// Enables Depth Testing   
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();				// Reset The Projection Matrix   
+    gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);	// Calculate The Aspect Ratio Of The Window
+    glMatrixMode(GL_MODELVIEW);
+
+    // set up light
+	glEnable(GL_LIGHTING); 
+	glEnable(GL_LIGHT0); 
+    glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);  // add lighting. (ambient)
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);  // add lighting. (diffuse).
+    glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);  // add lighting. (specular).
+    glLightfv(GL_LIGHT0, GL_POSITION,LightPosition); // set light position.
+
+    //set object's front face materials
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, LightDiffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, LightSpecular);
+    GLfloat shininess[] = {50};
+    glMaterialfv(GL_FRONT, GL_SHININESS, shininess);
+}
+
+void reshape(GLsizei Width, GLsizei Height)
+{
+    if (Height==0)				// Prevent A Divide By Zero If The Window Is Too Small
+	Height=1;
+
+    glViewport(0, 0, Width, Height);		// Reset The Current Viewport And Perspective Transformation
+
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    gluPerspective(45.0f,(GLfloat)Width/(GLfloat)Height,0.1f,100.0f);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+void display()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		// Clear The Screen And The Depth Buffer
+    glLoadIdentity();				// Reset The View
+
+    glTranslatef(0.0f,0.0f,-6.0f);
+    glLightfv(GL_LIGHT0, GL_POSITION,LightPosition); // set light position.
+
+    //render light source cube
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(LightPosition[0],LightPosition[1],LightPosition[2]);
+	glutSolidCube(0.2);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+    //calculate light position
+    LightPosition[0] = cos(glutGet(GLUT_ELAPSED_TIME)*0.001) * 2; 
+    //LightPosition[1] = sin(glutGet(GLUT_ELAPSED_TIME)*0.001) * 2;
+    LightPosition[1] = 1.0f;
+    LightPosition[2] = sin(glutGet(GLUT_ELAPSED_TIME)*0.001) * 2; 
+
+    //render sphere
+	glutSolidSphere(1,50,50);
+
+
+    //swap the buffers to display frame content.
+    glutSwapBuffers();
+}
+
+
+int main(int argc, char **argv) 
+{   
+    glutInit(&argc, argv);    
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_ALPHA);  
+    glutInitWindowSize(640, 480);  
+    glutInitWindowPosition(0, 0);
+    glutCreateWindow("Simple light example");
+
+    //fullscreen mode
+    //glutFullScreen();
+
+    //set our call back functions
+    glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+
+    //Initialize glut window.
+    init(640, 480);
+    timer(0);
+
+    glutMainLoop();  
+
+    return 1;
+}
+

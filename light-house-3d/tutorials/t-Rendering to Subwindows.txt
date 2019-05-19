@@ -1,0 +1,169 @@
+Before we start lets recall our callback definitions, as defined when the window and subwindows were created:
+
+idle function – renderSceneAll
+display func for main window – renderScene
+display func for subwindow 1 – renderScenesw1
+display func for subwindow 2 – renderScenesw2
+display func for subwindow 3 – renderScenesw3
+We’ll start by the display functions for each window. The main window is covered with subwindows so we only want to paint it black. 
+Since we are working with multiple windows the first thing we must do is call glutSetWindow with the proper window id. 
+Then we just clear the color buffer with the default color, black.
+
+void renderScene() {
+	glutSetWindow(mainWindow);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glutSwapBuffers();
+}
+We must define the display function for each subwindow. In our example, the geometry is the same for all windows, 
+the only thing that differs is the viewpoint, or the camera, if you prefer.
+
+The function where the common geometry is rendered is called renderScene2. 
+However, before we call this function we must set the current window to be the respective subwindow, load the identity matrix to clean the MODELVIEW matrix, 
+and set the camera with gluLookAt.
+
+As mentioned before in the initial section covering subwindows we have three subwindows with different perspectives of the same scene. 
+The first subwindow displays the scene from the current point of view, i.e. the main camera. The second displays the same scene from the top, i.e.
+ as if the camera was above the current position looking downwards, and with the same orientation as the line of sigh. 
+The third subwindow behaves like a camera to the right of the current position, and pointing at the current position.
+
+The following code defines the display functions for every window. This code is an extended version of the previous code. 
+If you require more detail just explore the previous sections, namely Moving the Camera II for the keyboard movement, Bitmaps and the Orthogonal View for text display, 
+or Frames per Second for the respective computation.
+
+Note that there are a few differences in the contents of the windows. The top window will display the fps counter using bitmap strings. 
+The two bottom windows will display a red cone at the position of the main camera.
+
+// Common render items for all subwindows
+void renderScene2() {
+
+// Draw ground
+
+	glColor3f(0.9f, 0.9f, 0.9f);
+	glBegin(GL_QUADS);
+		glVertex3f(-100.0f, 0.0f, -100.0f);
+		glVertex3f(-100.0f, 0.0f,  100.0f);
+		glVertex3f( 100.0f, 0.0f,  100.0f);
+		glVertex3f( 100.0f, 0.0f, -100.0f);
+	glEnd();
+
+// Draw 36 SnowMen
+	char number[3];
+	for(int i = -3; i < 3; i++)
+		for(int j=-3; j < 3; j++) {
+
+			glPushMatrix();
+			glTranslatef(i*10.0f, 0.0f, j * 10.0f);
+			drawSnowMan();
+			glPopMatrix();
+		}
+}
+
+// Display func for main window
+void renderScene() {
+	glutSetWindow(mainWindow);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glutSwapBuffers();
+}
+
+// Display func for sub window 1
+void renderScenesw1() {
+
+	glutSetWindow(subWindow1);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glLoadIdentity();
+	gluLookAt(x, y, z,
+		  x + lx,y + ly,z + lz,
+		  0.0f,1.0f,0.0f);
+
+	renderScene2();
+
+	// display fps in the top window
+ 	frame++;
+
+	time=glutGet(GLUT_ELAPSED_TIME);
+	if (time - timebase > 1000) {
+		sprintf(s,"Lighthouse3D - FPS:%4.2f",
+			frame*1000.0/(time-timebase));
+		timebase = time;
+		frame = 0;
+	}
+
+	setOrthographicProjection();
+
+	glPushMatrix();
+	glLoadIdentity();
+	renderBitmapString(5,30,0,GLUT_BITMAP_HELVETICA_12,s);
+	glPopMatrix();
+
+	restorePerspectiveProjection();
+
+	glutSwapBuffers();
+}
+
+// Display func for sub window 2
+void renderScenesw2() {
+
+	glutSetWindow(subWindow2);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glLoadIdentity();
+	gluLookAt(x, y+15, z,
+		  x ,y - 1,z,
+		  lx,0,lz);
+
+	// Draw red cone at the location of the main camera
+	glPushMatrix();
+	glColor3f(1.0,0.0,0.0);
+	glTranslatef(x,y,z);
+	glRotatef(180-(angle+deltaAngle)*180.0/3.14,0.0,1.0,0.0);
+	glutSolidCone(0.2,0.8f,4,4);
+	glPopMatrix();
+
+	renderScene2();
+
+	glutSwapBuffers();
+}
+
+// Display func for sub window 3
+void renderScenesw3() {
+
+	glutSetWindow(subWindow3);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glLoadIdentity();
+	gluLookAt(x-lz*10 , y, z+lx*10,
+		  x ,y ,z ,
+		  0.0f,1.0f,0.0f);
+
+	// Draw red cone at the location of the main camera
+	glPushMatrix();
+	glColor3f(1.0,0.0,0.0);
+	glTranslatef(x,y,z);
+	glRotatef(180-(angle+deltaAngle)*180.0/3.14,0.0,1.0,0.0);
+	glutSolidCone(0.2,0.8f,4,4);
+	glPopMatrix();
+
+	renderScene2();
+
+	glutSwapBuffers();
+}
+Now all its left to do is to define the global idle function. In our example, this function is renderSceneAll. 
+This function checks if the variables deltaMove or deltaAngle are not zero, and updates the values of the current position, and the line of sight vector.
+
+Afterwards we call the display functions for each of the subwindows. Note that we are not calling the display function for the main window because its contents never change.
+
+// Global idle func
+void renderSceneAll() {
+
+	// check for keyboard movement
+	if (deltaMove)
+		computePos(deltaMove);
+
+	renderScenesw1();
+	renderScenesw2();
+	renderScenesw3();
+}

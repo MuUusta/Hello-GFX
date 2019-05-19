@@ -1,0 +1,119 @@
+Pop-up menus are also a part of GLUT. Although not all the features of the Pop-up menus usually found in windows systems are implemented, 
+this part of GLUT does a great job. Adding menus to an application provides an easier way to interact and select options than the keyboard, 
+avoiding having to remember all those keys.
+
+The first thing we must do is to create a menu. GLUT’s function glutCreateMenu has the following syntax:
+
+int glutCreateMenu(void (*func)(int value));
+
+Parameters:
+
+func – the function that will handle the menu events for the newly created menu.
+The return value for this function is the menu identifier.
+
+We can have as many menus as we want in our application. And for each menu a callback function is specified, although we can specify the same function for all our menus. 
+Next we add some entries to the menu. The function to do this is glutAddMenuEntry.
+
+void glutAddMenuEntry(char *name, int value);
+
+Parameters:
+
+name – the string that will show up in the menu.
+value – this is the value that will be the returned to the callback function when the menu entry is selected.
+This function appends the entry to the previously added entries, i.e. to the bottom of the menu. In GLUT there is no function to add an entry to the middle of the menu. 
+Remember that GLUT doesn’t pretend to be a complete API. GLUT is designed to make our lives easier when designing prototypes and it does an excellent job at that.
+
+OK, so now you have a pop-up menu, but there’s one last thing we must do: attach the menu to a mouse button, that is we must specify when the pop-up menu will appear. 
+Using GLUT you can cause the menu to appear when a mouse button is pressed. The function to establish this relationship is glutAttachMenu.
+
+void glutAttachMenu(int button);
+
+Parameters:
+
+button – an integer that specifies which button the menu will be attached to.
+The button should have one of the following values:
+
+GLUT_LEFT_BUTTON
+GLUT_MIDDLE_BUTTON
+GLUT_RIGHT_BUTTON
+So here is a function that exemplifies the usage of all the above functions.
+
+...
+#define RED 1
+#define GREEN 2
+#define BLUE 3
+#define ORANGE 4
+...
+
+void createGLUTMenus() {
+
+	int menu;
+
+	// create the menu and
+	// tell glut that "processMenuEvents" will
+	// handle the events
+	menu = glutCreateMenu(processMenuEvents);
+
+	//add entries to our menu
+	glutAddMenuEntry("Red",RED);
+	glutAddMenuEntry("Blue",BLUE);
+	glutAddMenuEntry("Green",GREEN);
+	glutAddMenuEntry("Orange",ORANGE);
+
+	// attach the menu to the right button
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+}
+Now we’ll write the function to process the menu events. As you probably guessed by now, we’re going to set a color using our menu.
+
+Note that our function must be called processMenuEvents, thats the name we provided when we created the menu in the function above. Furthermore, 
+looking at the syntax of glutCreateMenu we know that it will have a parameter representing the selected menu item.
+
+void processMenuEvents(int option) {
+
+	switch (option) {
+		case RED :
+			red = 1.0f;
+			green = 0.0f;
+			blue = 0.0f; break;
+		case GREEN :
+			red = 0.0f;
+			green = 1.0f;
+			blue = 0.0f; break;
+		case BLUE :
+			red = 0.0f;
+			green = 0.0f;
+			blue = 1.0f; break;
+		case ORANGE :
+			red = 1.0f;
+			green = 0.5f;
+			blue = 0.5f; break;
+	}
+}
+The only thing left to do is to add a call createGLUTMenus in our main function.
+
+Before we end this introduction to glut pop-up menus, we’re going to look at two more functions. The first one allows you to break the 
+relationship between a mouse button and a menu. 
+Previously we attached the menu to a mouse button using the glut’s function glutAttachMenu. In some applications it may be useful to break this association, i.e. 
+when the user presses the mouse the menu no longer appears. In GLUT this is done with the function glutDetachMenu. 
+This function causes GLUT to stop providing a menu when the mouse button is pressed. The syntax is as follows:
+
+void glutDetachMenu(int button);
+
+Parameters:
+
+button – the button to detach
+The button parameter takes the same values as for the glutAttachMenu.
+
+So in our previous example, if we want to free the mouse button, we could write:
+
+	...
+	glutDetachMenu(GLUT_RIGHT_BUTTON);
+	...
+And finally, if we want to free the resources used by the menu then we can destroy it. The GLUT function to do this is glutDestroyMenu and it has the following syntax:
+
+void glutDestroyMenu(int menuIdentifier);
+
+Parameters:
+
+menuIdentifier – this is the id of the menu to destroy. It must be the same value as the id returned by the function glutCreateMenu.
+So this is it, you now know the basics of building menus with GLUT. Next we’ll explore some more features of the pop-up menus.

@@ -1,0 +1,107 @@
+Creating and Destroying Subwindows
+
+With GLUT we can define subwindows, i.e. divide the main window in different regions, each with its own OpenGL context and callbacks. 
+One possible application is to provide several views of the same scene simultaneously.
+
+In order to create a subwindow we use the function glutCreateSubWindow with the following syntax:
+
+int glutCreateSubWindow(int parentWindow, int x, int y, int width, int height);
+
+Parameters:
+
+parentwindow – the id of the parent window
+x, y – the top left corner of the subwindow, relative to the parent window’s origin
+width, height – the size of the sub window
+The id of the parent window is the return value obtained when creating the parent window. The following code shows this relationship:
+
+	mainWindow = glutCreateWindow("SnowMen from Lighthouse3D");
+	...
+	subWindow1 = glutCreateSubWindow(mainWindow, 10,10,100,100);
+A subwindow can also be a parent window for other subwindows. According to GLUTs spec subwindows can be nested arbitrarily.
+
+As mentioned before a subwindow has its own OpenGL context, 
+so for instance if we’re using VBOs we’ll need to create them for every window and subwindow where we want to render them. 
+The same applies to most of the callback functions.
+
+At the very least we must register the display function for each window we create using glutDisplayFunc. 
+For each window, we must also register callbacks for cursor changes and mouse event handling, if we want to use these features. 
+Pop-up menus are also assigned to a particular window. Note however that there is only one idle function.
+
+Assume we want to create a setup with three views. One for the main camera, another with a view from the top, centred on the main camera, 
+and a third one from the side, again centred on the main camera.
+click "view output" to illustrate the layout.
+
+
+
+The following code is a more complete version of the initialization required. 
+We’ve created a function to register the callbacks and perform some OpenGL initialization since this will be used in all subwindows. 
+We also declare three variables to store the window and subwindow ids, we’ll need them latter.
+
+int mainWindow, subWindow1,subWindow2,subWindow3;
+...
+void init() {
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+
+	// register callbacks
+	glutIgnoreKeyRepeat(1);
+	glutKeyboardFunc(processNormalKeys);
+	glutSpecialFunc(pressKey);
+	glutSpecialUpFunc(releaseKey);
+	glutMouseFunc(mouseButton);
+	glutMotionFunc(mouseMove);
+}
+
+int main(int argc, char **argv) {
+
+	// init GLUT and create main window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowPosition(100,100);
+	glutInitWindowSize(800,800);
+	mainWindow = glutCreateWindow("Lighthouse3D - GLUT Tutorial");
+
+	// callbacks for main window
+	glutDisplayFunc(renderScene);
+	glutReshapeFunc(changeSize);
+	glutIdleFunc(renderSceneAll);
+	init();
+
+	// sub windows
+	subWindow1 = glutCreateSubWindow(mainWindow, border,border,w-2*border, h/2 - border*3/2);
+	glutDisplayFunc(renderScenesw1);
+	init();
+
+	subWindow2 = glutCreateSubWindow(mainWindow, border,(h+border)/2,w/2-border*3/2, h/2 - border*3/2);
+	glutDisplayFunc(renderScenesw2);
+	init();
+
+	subWindow3 = glutCreateSubWindow(mainWindow, (w+border)/2,(h+border)/2,w/2-border*3/2,h/2 - border*3/2);
+	glutDisplayFunc(renderScenesw3);
+	init();
+
+	// enter GLUT event processing cycle
+	glutMainLoop();
+	
+	return 1;
+}
+The above code creates three subwindows. Each subwindow is used to represent a different viewpoint of the same scene. 
+The top subwindow represents the free moving camera, the bottom left the view from the top, and the bottom right the view from the right.
+
+When a window is created, either the main window or a subwindow, it becomes the current window. All callbacks registered then are relative to the current window, 
+except the idle function, that as mentioned before is unique for the whole application.
+
+Note that we did call initScene for all the subwindows to initialize the OpenGL context for the subwindow. 
+Also note that we only register the reshape func once for the main window.
+
+A subwindow can be destroyed when no longer needed. In order to do that, we can use the function glutDestroyWindow.
+
+void glutDestroyWindow(int windowIdentifier)
+
+Parameters:
+
+windowIdentifier – the value returned when creating the window
+This function destroys the window, any subwindows it contains, and all OpenGL contexts for the destroyed windows.
+
+In the next sections we’ll look at the reshape and render functions.
