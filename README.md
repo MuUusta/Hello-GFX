@@ -44,7 +44,7 @@
   # Credits:
   - Developed by [Mustafa Gamal](https://www.linkedin.com/in/mustafa-gamal-abdel-naser-4b7289132/).
   
-    E-Mail: G.F.X.Hello@gmail.com
+    E-mail: G.F.X.Hello@gmail.com
   
   - Thanks to  [Joey de Vries](https://joeydevries.com/#home) for his great OpenGL tutorials website [LearnOpenGL](https://learnopengl.com/)
     i have used some of his tutorials & [LightHouse3D](http://www.lighthouse3d.com/tutorials/glut-tutorial/) glut tutorials in my application.
