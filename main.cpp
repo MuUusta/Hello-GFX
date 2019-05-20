@@ -5,7 +5,7 @@
 *                                                                           *
 *  -----------------------------------------------------------------------  *
 *                                                                           *
-*  5/19/2019 Mustafa Gamal (mg.mustafagamal@gmail.com)                        *
+*  5/19/2019 Mustafa Gamal (mg.mustafagamal@gmail.com)                      *
 *                                                                           *
 *                                                                           *
 ****************************************************************************/
@@ -108,9 +108,8 @@ int main(int argc, char* argv[])
 
     //init Pop-up Menus
     createPopupMenus();
-    /****************************************/
-    /*          Enable z-buferring          */
-    /****************************************/
+    
+    //Enable z-buferring
     glEnable(GL_DEPTH_TEST);
     //add fonts
     addFontList(fontListVector);
