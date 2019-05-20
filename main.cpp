@@ -5,7 +5,7 @@
 *                                                                           *
 *  -----------------------------------------------------------------------  *
 *                                                                           *
-*  7/31/92 Mustafa Gamal (mg.mustafagamal@gmail.com)                        *
+*  5/19/2019 Mustafa Gamal (mg.mustafagamal@gmail.com)                        *
 *                                                                           *
 *                                                                           *
 ****************************************************************************/
@@ -39,7 +39,6 @@ using namespace std;                      //
 //////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////
-// #define WINDOWS  /* uncomment this line to use it for windows.*/     //
 #ifdef WINDOWS                                                          //
 #include <direct.h>                                                     //
 #define GetCurrentDir _getcwd                                           //
@@ -118,7 +117,7 @@ int main(int argc, char* argv[])
     //initialize ImGui
     ImGui_Initialization();
     //load models
-    //logl_modelsLoader();
+    logl_modelsLoader();
 
     //load and play intro sound
     introSound.openFromFile("Sounds/impact.wav");
