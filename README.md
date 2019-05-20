@@ -39,7 +39,7 @@
      after installation is done.
      
   # Note:
-  - if your hardware doesn't support OpenGL version 3.3 or higher, you will notice that some of the tutorials have no output
+  - If your hardware doesn't support OpenGL version 3.3 or higher, you will notice that some of the tutorials have no output
 
   # Credits:
   - Developed by [Mustafa Gamal](https://www.linkedin.com/in/mustafa-gamal-abdel-naser-4b7289132/).
