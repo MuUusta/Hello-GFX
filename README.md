@@ -20,8 +20,8 @@
   
   - GUI used is [Dear ImGui](https://github.com/ocornut/imgui) developed by [Omar Cornut](http://www.miracleworld.net/).
   
-# Operating systems Supporeted:
-  - Hello-GFX can be installed only on linux, so if you are using windows you can setup a virtual machine & install the 
+# Operating systems Supported:
+  - Hello-GFX can be installed only on Linux, so if you are using windows you can set-up a virtual machine & install the 
   application on your VM.
   
 # Installation:
@@ -39,7 +39,7 @@
      after installation is done.
      
   # Note:
-  - if your hardware doesn't support OpenGL version 3.3 or higher, you will notice that some of the tutorials has no output
+  - if your hardware doesn't support OpenGL version 3.3 or higher, you will notice that some of the tutorials have no output
 
   # Credits:
   - Developed by [Mustafa Gamal](https://www.linkedin.com/in/mustafa-gamal-abdel-naser-4b7289132/).
