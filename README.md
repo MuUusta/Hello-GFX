@@ -33,7 +33,7 @@
   
   4- type: 
   
-     make-install
+     make install
      
   external dependencies and needed libraries will be installed automatically and then the app will run
      after installation is done.
