@@ -1,5 +1,5 @@
 # About Hello-GFX:
-  Hello-GFX is an OpenGL/C++ program, 
+  Hello-GFX is an OpenGL/C++ open source software, 
   The main purpose of this program is to help computer graphics students and hobbyists to learn OpenGL easily
   without worrying about libraries, dependencies, compilers, makefiles, linking errors and where to find good tutorials.
   
