@@ -40,7 +40,7 @@
      after installation is done.
      
   # Note:
-  - If your hardware doesn't support OpenGL version 3.3 or higher, you will notice that some of the tutorials have no output
+  - If your hardware doesn't support OpenGL version 3.3 or higher, you will notice that some of the tutorials have no output     because the GLSL version used in this software is 3.30.6 - OpenGL version is 3.3 - Shader Preprocessor #version 330.
 
   # Credits:
   - Developed by [Mustafa Gamal](https://www.linkedin.com/in/mustafa-gamal-abdel-naser-4b7289132/).
