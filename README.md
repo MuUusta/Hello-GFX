@@ -4,19 +4,19 @@
   without worrying about libraries, dependencies, compilers, makefiles, linking errors and where to find good tutorials.
   
   # Features:
-  - OpenGL tutorials with the output in the same graphics context window. [screenshot](https://github.com/MuUusta/Hello-GFX/blob/master/Screenshots/OpenGl-Tutorial.png)
+  - OpenGL tutorials with the output in the same graphics context window. [screenshot](https://raw.githubusercontent.com/MuUusta/Hello-GFX/master/Screenshots/OpenGl-Tutorial.png)
   
   - Text-Editor within the app that allows you to write your C++/OpenGL code, You can build, run the program 
-   to see the output and also can export as a project if you want to save your code. [screenshot](https://github.com/MuUusta/Hello-GFX/blob/master/Screenshots/Text-Editor.png)
+   to see the output and also can export as a project if you want to save your code. [screenshot](https://raw.githubusercontent.com/MuUusta/Hello-GFX/master/Screenshots/Text-Editor.png)
    
   - Resources window contains hyperlinks to all OpenGL youtube tutorials, website tutorials, books, and other 
-   related like (readings bout OpenGL - OpenGL functions - glut installation and functions - general CG tutorials). [screenshot](https://github.com/MuUusta/Hello-GFX/blob/master/Screenshots/Resources.png)
+   related like (readings bout OpenGL - OpenGL functions - glut installation and functions - general CG tutorials). [screenshot](https://raw.githubusercontent.com/MuUusta/Hello-GFX/master/Screenshots/Resources.png)
    
-  - Search bar to find a specific keyword, sentence or piece of code in the tutorials. [screenshot](https://github.com/MuUusta/Hello-GFX/blob/master/Screenshots/Search.png)
+  - Search bar to find a specific keyword, sentence or piece of code in the tutorials. [screenshot](https://raw.githubusercontent.com/MuUusta/Hello-GFX/master/Screenshots/Search.png)
 
-  - Music player within the app created using SFML for audio functions and Dear ImGui for the design. [screenshot](https://github.com/MuUusta/Hello-GFX/blob/master/Screenshots/MusicPlayer.png)
+  - Music player within the app created using SFML for audio functions and Dear ImGui for the design. [screenshot](https://raw.githubusercontent.com/MuUusta/Hello-GFX/master/Screenshots/MusicPlayer.png)
   
-  - User progress info. [screenshot](https://github.com/MuUusta/Hello-GFX/blob/master/Screenshots/UserInfo.png)
+  - User progress info. [screenshot](https://raw.githubusercontent.com/MuUusta/Hello-GFX/master/Screenshots/UserInfo.png)
   
   
   - GUI used is [Dear ImGui](https://github.com/ocornut/imgui) developed by [Omar Cornut](http://www.miracleworld.net/).
